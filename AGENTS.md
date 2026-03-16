@@ -2,5 +2,6 @@
 
 ## Repository expectations
 - Use Electron + React
-- Не используй chmod команды, так как это shared папка через vmware от windows host машины
+- РќРµ РёСЃРїРѕР»СЊР·СѓР№ chmod РєРѕРјР°РЅРґС‹, С‚Р°Рє РєР°Рє СЌС‚Рѕ shared РїР°РїРєР° С‡РµСЂРµР· vmware РѕС‚ windows host РјР°С€РёРЅС‹
+
 
