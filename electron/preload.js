@@ -2,5 +2,53 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
-  infer: (conversation) => ipcRenderer.invoke('app:infer', conversation),
+  inferStream: async (conversation, handlers = {}) => {
+    const requestId =
+      typeof crypto?.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const subscriptions = [
+      [
+        'app:infer:chunk',
+        (_event, payload) => {
+          if (payload?.requestId === requestId) {
+            handlers.onChunk?.(payload.delta || '');
+          }
+        },
+      ],
+      [
+        'app:infer:done',
+        (_event, payload) => {
+          if (payload?.requestId === requestId) {
+            handlers.onDone?.(payload.output || '');
+          }
+        },
+      ],
+      [
+        'app:infer:error',
+        (_event, payload) => {
+          if (payload?.requestId === requestId) {
+            handlers.onError?.(
+              new Error(payload?.message || 'Не удалось получить ответ.'),
+            );
+          }
+        },
+      ],
+    ];
+
+    for (const [channel, listener] of subscriptions) {
+      ipcRenderer.on(channel, listener);
+    }
+
+    try {
+      return await ipcRenderer.invoke('app:infer', {
+        requestId,
+        conversation,
+      });
+    } finally {
+      for (const [channel, listener] of subscriptions) {
+        ipcRenderer.removeListener(channel, listener);
+      }
+    }
+  },
 });

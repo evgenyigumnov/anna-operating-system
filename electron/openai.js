@@ -144,14 +144,15 @@ async function runInferenceSession(conversation, options = {}) {
   }
 
   while (true) {
-    let response;
+    let stream;
 
     try {
-      response = await client.chat.completions.create({
+      stream = await client.chat.completions.create({
         model: LLM_STUDIO_MODEL,
         messages,
         tool_choice: 'auto',
         tools,
+        stream: true,
       });
     } catch (error) {
       logInferenceError(error, {
@@ -161,8 +162,67 @@ async function runInferenceSession(conversation, options = {}) {
       throw error;
     }
 
-    const choice = response.choices?.[0];
-    const assistantMessage = choice?.message;
+    const assistantMessage = {
+      role: 'assistant',
+      content: '',
+      tool_calls: [],
+    };
+    const toolCallMap = new Map();
+    let finishReason = null;
+
+    for await (const chunk of stream) {
+      const choice = chunk.choices?.[0];
+      const delta = choice?.delta;
+
+      if (!delta) {
+        continue;
+      }
+
+      if (typeof delta.content === 'string' && delta.content) {
+        assistantMessage.content += delta.content;
+
+        if (typeof options.onTextDelta === 'function') {
+          options.onTextDelta(delta.content);
+        }
+      }
+
+      if (Array.isArray(delta.tool_calls)) {
+        for (const toolCallDelta of delta.tool_calls) {
+          const index = toolCallDelta.index ?? assistantMessage.tool_calls.length;
+          const existingToolCall =
+            toolCallMap.get(index) || {
+              id: toolCallDelta.id || '',
+              type: 'function',
+              function: {
+                name: toolCallDelta.function?.name || '',
+                arguments: '',
+              },
+            };
+
+          if (toolCallDelta.id) {
+            existingToolCall.id = toolCallDelta.id;
+          }
+
+          if (toolCallDelta.function?.name) {
+            existingToolCall.function.name = toolCallDelta.function.name;
+          }
+
+          if (typeof toolCallDelta.function?.arguments === 'string') {
+            existingToolCall.function.arguments += toolCallDelta.function.arguments;
+          }
+
+          toolCallMap.set(index, existingToolCall);
+        }
+      }
+
+      if (choice.finish_reason) {
+        finishReason = choice.finish_reason;
+      }
+    }
+
+    assistantMessage.tool_calls = [...toolCallMap.entries()]
+      .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+      .map(([, toolCall]) => toolCall);
 
     if (!assistantMessage) {
       return {
@@ -178,7 +238,10 @@ async function runInferenceSession(conversation, options = {}) {
       messageCount: messages.length,
     });
 
-    if (!assistantMessage.tool_calls?.length) {
+    if (
+      finishReason !== 'tool_calls' &&
+      !assistantMessage.tool_calls?.length
+    ) {
       return {
         output: assistantText || 'Нет ответа от модели.',
         steps: stepHistory,

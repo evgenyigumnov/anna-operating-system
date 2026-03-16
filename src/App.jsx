@@ -56,15 +56,35 @@ function App() {
     const nextConversation = [
       ...conversation,
       { role: 'user', content: trimmedMessage },
+      { role: 'assistant', content: '' },
     ];
 
     setConversation(nextConversation);
-    persistConversation(nextConversation);
+    persistConversation(nextConversation.slice(0, -1));
 
     try {
-      const reply = await window.appControls.infer(nextConversation);
+      const reply = await window.appControls.inferStream(nextConversation.slice(0, -1), {
+        onChunk(delta) {
+          setConversation((currentConversation) => {
+            const updatedConversation = [...currentConversation];
+            const lastEntry = updatedConversation.at(-1);
+
+            if (!lastEntry || lastEntry.role !== 'assistant') {
+              return currentConversation;
+            }
+
+            updatedConversation[updatedConversation.length - 1] = {
+              ...lastEntry,
+              content: `${lastEntry.content}${delta}`,
+            };
+
+            return updatedConversation;
+          });
+        },
+      });
+
       const completedConversation = [
-        ...nextConversation,
+        ...nextConversation.slice(0, -1),
         { role: 'assistant', content: reply },
       ];
 
@@ -74,7 +94,7 @@ function App() {
       const details =
         error instanceof Error ? error.message : 'Не удалось получить ответ.';
       const failedConversation = [
-        ...nextConversation,
+        ...nextConversation.slice(0, -1),
         { role: 'assistant', content: `Ошибка: ${details}` },
       ];
 
