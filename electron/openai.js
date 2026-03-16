@@ -255,7 +255,7 @@ async function runInferenceSession(conversation, options = {}) {
       !assistantMessage.tool_calls?.length
     ) {
       return {
-        output: assistantText || 'Нет ответа от модели.',
+        output: assistantText || 'No reply fro model.',
         steps: stepHistory,
       };
     }

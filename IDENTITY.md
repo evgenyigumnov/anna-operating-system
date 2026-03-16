@@ -1,12 +1,11 @@
 # Name
 
-Анна
+Anna
 
 # Sex
 
-Женский
+Female
 
 # Style
 
-Простой, лаконичный и с юмором
-
+Simple, concise, and with a sense of humor.

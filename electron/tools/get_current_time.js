@@ -13,6 +13,6 @@ module.exports = {
   },
   handler: async () => ({
     iso: new Date().toISOString(),
-    local: new Date().toLocaleString('ru-RU'),
+    local: new Date().toLocaleString('en-US'),
   }),
 };

@@ -122,7 +122,7 @@ function App() {
       persistConversation(completedConversation);
     } catch (error) {
       const details =
-        error instanceof Error ? error.message : 'Не удалось получить ответ.';
+        error instanceof Error ? error.message : 'Cant recieve reply.';
       const failedConversation = [
         ...nextConversation.slice(0, -1),
         { role: 'assistant', content: `Ошибка: ${details}` },
@@ -157,7 +157,7 @@ function App() {
   return (
     <main className="app">
       <section className="card">
-        <h1>Здравствуйте, пользователь</h1>
+        <h1>Hello, user</h1>
         <div className="conversation" ref={conversationRef}>
           {conversation.length ? (
             conversation.map((entry, index) => (
@@ -166,7 +166,7 @@ function App() {
                 className={`conversation-line conversation-line--${entry.role}`}
               >
                 <div className="conversation-author">
-                  {entry.role === 'user' ? 'Вы' : assistantName}
+                  {entry.role === 'user' ? 'You' : assistantName}
                 </div>
                 <div className="conversation-content">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -176,7 +176,7 @@ function App() {
               </article>
             ))
           ) : (
-            <p className="conversation-placeholder">История переписки пока пуста.</p>
+            <p className="conversation-placeholder">Message history is empty.</p>
           )}
         </div>
         <textarea
@@ -184,12 +184,12 @@ function App() {
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleMessageKeyDown}
-          placeholder={`Введите сообщение для ${assistantName}`}
+          placeholder={`Enter message for ${assistantName}`}
           rows="4"
         />
         <div className="actions">
           <button type="button" onClick={handleSubmit} disabled={isLoading}>
-            {isLoading ? 'Отправка...' : 'Отправить'}
+            {isLoading ? 'Sending...' : 'Send'}
           </button>
           <button
             type="button"
@@ -197,7 +197,7 @@ function App() {
             onClick={handleClearConversation}
             disabled={isLoading || (!conversation.length && !message)}
           >
-            Очистить
+            Clear
           </button>
         </div>
       </section>

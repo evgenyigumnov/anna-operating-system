@@ -1,8 +1,7 @@
 # AGENTS.md
 
 ## Repository expectations
-- Use Electron + React
-- Не используй chmod команды, так как это shared папка через vmware от windows host машины
-- После завершения внесений всех изменений когда задача готово. Запускай npm run build 
 
-
+* Use Electron + React
+* Don’t use `chmod` commands, because this is a shared folder via VMware from a Windows host machine
+* After all changes are completed and the task is ready, run `npm run build`

@@ -6,19 +6,16 @@ const {
 } = require('./markdown-config');
 
 const DEFAULT_IDENTITY = {
-  name: 'Анна',
-  sex: 'Женский',
-  style: 'Простой, лаконичный и с юмором',
+  name: 'Anna',
+  sex: 'Female',
+  style: 'Simple, concise, and with a sense of humor',
 };
 
 const HEADING_TO_FIELD = new Map([
   ['name', 'name'],
-  ['имя', 'name'],
   ['sex', 'sex'],
   ['gender', 'sex'],
-  ['пол', 'sex'],
   ['style', 'style'],
-  ['стиль', 'style'],
 ]);
 
 function parseIdentityMarkdown(markdown) {

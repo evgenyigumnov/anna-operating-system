@@ -1,14 +1,14 @@
-# Какие 10 кейсов будут самыми массовыми в реальности
+# Which 10 use cases will be the most widespread in reality?
 
-Если расставить по вероятной популярности для массового пользователя, то я бы поставил так:
+If I were to rank them by likely popularity among the general user, I would rank them like this:
 
-1. Напоминания и бытовые задачи
-2. Утренняя/вечерняя сводка дня
-3. Разбор почты и важных сообщений
-4. Контроль счетов и подписок
-5. Мониторинг цен, сайтов и наличия
-6. Поиск по личным файлам 
-7. Заказы, доставки, трекинг 
-8. Удалённые действия на домашнем ПК
-9. Семейный административный помощник
-10. Персональный ресерч и объяснения
+1. Reminders and household tasks
+2. Morning/evening summary
+3. Mail and important message sorting
+4. Account and subscription control
+5. Price, website, and availability monitoring
+6. Personal file search
+7. Orders, deliveries, tracking
+8. Remote actions on a home PC
+9. Family administrative assistant
+10. Personal research and explanations

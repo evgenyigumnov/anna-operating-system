@@ -65,12 +65,12 @@ module.exports = {
       {
         role: 'user',
         content: [
-          'Выполни задачу с помощью доступных тулзов.',
-          `Задача: ${task.trim()}`,
+          'Complete the task using the available tools.',
+          `Task: ${task.trim()}`,
           normalizedHistory.length
-            ? `Что уже делалось:\n${normalizedHistory.map((step, index) => `${index + 1}. ${step}`).join('\n')}`
-            : 'Что уже делалось: пока шагов нет.',
-          'Работай по шагам, при необходимости вызывай несколько разных тулзов, а в финале верни только результат задачи и краткий список реально выполненных шагов.',
+              ? `What has already been done:\n${normalizedHistory.map((step, index) => `${index + 1}. ${step}`).join('\n')}`
+              : 'What has already been done: no steps yet.',
+          'Work step by step, call multiple different tools if needed, and in the end return only the task result and a brief list of the steps actually performed.',
         ].join('\n\n'),
       },
     ];
