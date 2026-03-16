@@ -7,8 +7,12 @@ const {
   logToolResult,
 } = require('./logger');
 
-const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
-const LLM_STUDIO_MODEL = 'unsloth/qwen3.5-9b';
+// const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
+const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:11434/v1';
+// const LLM_STUDIO_MODEL = 'qwen3.5-27b';
+// const LLM_STUDIO_MODEL = 'unsloth/qwen3.5-9b';
+// qwen3.5:397b-cloud
+const LLM_STUDIO_MODEL = 'qwen3.5:397b-cloud';
 const DEFAULT_SYSTEM_PROMPT =
   'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Use tools when they are relevant.';
 
