@@ -7,13 +7,15 @@ const { logInferenceError, logTaskEvent } = require('./logger');
 const TASKS_DIRECTORY = path.join(__dirname, 'tasks');
 const STATE_FILE_PATH = path.join(TASKS_DIRECTORY, '.task-runner-state.json');
 const MAX_HISTORY_ITEMS = 20;
+const SILENCE_TOKEN = 'KEEP_SILENCE';
 
 const taskFromStepsTool = require('./tools/task_from_steps');
 
 const headingToField = new Map([
   ['schedule', 'schedule'],
   ['instructions', 'instructions'],
-  ['context', 'context'],
+  ['history', 'history'],
+  ['context', 'history'],
 ]);
 
 const taskTimers = new Map();
@@ -65,14 +67,14 @@ function parseTaskFile(filePath) {
     defaults: {
       schedule: 'ASAP',
       instructions: '',
-      context: 'No',
+      history: 'No',
     },
     headingToField,
   });
 
   const schedule = trimText(parsed.schedule);
   const instructions = trimText(parsed.instructions);
-  const context = trimText(parsed.context);
+  const history = trimText(parsed.history);
 
   if (!instructions) {
     throw new Error(`Task file "${path.basename(filePath)}" does not contain instructions.`);
@@ -84,7 +86,7 @@ function parseTaskFile(filePath) {
     fileName: path.basename(filePath),
     schedule,
     instructions,
-    context,
+    history,
   };
 }
 
@@ -174,20 +176,20 @@ function takeRecentMessages(taskState, limit) {
 }
 
 function buildStepHistory(taskConfig, taskState) {
-  const normalizedContext = taskConfig.context.toLowerCase();
+  const normalizedHistory = taskConfig.history.toLowerCase();
 
-  if (normalizedContext === 'no') {
+  if (normalizedHistory === 'no') {
     return [];
   }
 
-  const lastMessagesPattern = normalizedContext.match(/^last\s+(\d+)\s+messages$/);
+  const lastMessagesPattern = normalizedHistory.match(/^last\s+(\d+)\s+messages$/);
 
   if (lastMessagesPattern) {
     const messageLimit = Number(lastMessagesPattern[1]);
     return takeRecentMessages(taskState, messageLimit);
   }
 
-  return [`Task context: ${taskConfig.context}`];
+  return [`Task history: ${taskConfig.history}`];
 }
 
 function buildTaskPrompt(taskConfig) {
@@ -198,12 +200,13 @@ function buildTaskPrompt(taskConfig) {
     taskConfig.instructions,
   ];
 
-  if (taskConfig.context && taskConfig.context.toLowerCase() !== 'no') {
-    promptParts.push(`Context rule: ${taskConfig.context}`);
+  if (taskConfig.history && taskConfig.history.toLowerCase() !== 'no') {
+    promptParts.push(`History rule: ${taskConfig.history}`);
   }
 
   promptParts.push(
-    'If the task says to stay silent when nothing important happened, return exactly "SILENT".',
+    `If the task says to stay silent, says that nothing changed, or says to stay silent if it was already reported before, return exactly "${SILENCE_TOKEN}".`,
+    `Do not explain why you are staying silent. `,
     'Return the final result in English.',
     'If the task requires a notification or advice, return the useful result in concise Markdown.',
   );
@@ -246,7 +249,7 @@ function normalizeTaskOutput(rawResult) {
 }
 
 function publishTaskResult(taskConfig, output, options = {}) {
-  if (!output || output === 'SILENT') {
+  if (!output || output.includes(SILENCE_TOKEN)) {
     return;
   }
 
@@ -319,7 +322,7 @@ async function runTask(taskConfig, options = {}) {
     });
 
     const execution = await executeTask(taskConfig, taskState);
-    const output = execution.output || 'SILENT';
+    const output = execution.output || SILENCE_TOKEN;
 
     state.tasks[taskConfig.id] = persistTaskResult(taskConfig, output, taskState);
     saveState(state);
