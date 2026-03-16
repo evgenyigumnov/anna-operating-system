@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { buildIdentityPrompt, loadIdentity } = require('./identity');
 const {
   logAssistantMessage,
   logInferenceError,
@@ -16,6 +17,16 @@ const LLM_STUDIO_MODEL = 'gpt-oss:120b-cloud';
 
 const DEFAULT_SYSTEM_PROMPT =
   'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Format every final answer as Markdown. Use tools when they are relevant.';
+
+function buildSystemPrompt(options = {}) {
+  const basePrompt =
+    typeof options.systemPrompt === 'string' && options.systemPrompt.trim()
+      ? options.systemPrompt.trim()
+      : DEFAULT_SYSTEM_PROMPT;
+  const identityPrompt = buildIdentityPrompt(loadIdentity());
+
+  return `${basePrompt}\n\n${identityPrompt}`;
+}
 
 async function createOpenAIClient() {
   let OpenAI;
@@ -126,10 +137,7 @@ function extractTextContent(content) {
 async function runInferenceSession(conversation, options = {}) {
   const client = await createOpenAIClient();
   const { definitions: tools, handlers: toolHandlers } = loadTools(options);
-  const systemPrompt =
-    typeof options.systemPrompt === 'string' && options.systemPrompt.trim()
-      ? options.systemPrompt.trim()
-      : DEFAULT_SYSTEM_PROMPT;
+  const systemPrompt = buildSystemPrompt(options);
   const stepHistory = [];
   const messages = [
     {
