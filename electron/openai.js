@@ -5,13 +5,10 @@ function getCurrentTime() {
   };
 }
 
+const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
+const LLM_STUDIO_MODEL = 'unsloth/qwen3.5-9b';
+
 async function createOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY is not set');
-  }
-
   let OpenAI;
 
   try {
@@ -20,59 +17,85 @@ async function createOpenAIClient() {
     throw new Error('The openai package is not installed. Run npm i openai');
   }
 
-  return new OpenAI({ apiKey });
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || 'llm-studio',
+    baseURL: LLM_STUDIO_BASE_URL,
+  });
 }
 
 async function runInference(message) {
   const client = await createOpenAIClient();
+  const messages = [
+    {
+      role: 'system',
+      content:
+        'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Use tools when they are relevant.',
+    },
+    {
+      role: 'user',
+      content: message,
+    },
+  ];
 
-  let response = await client.responses.create({
-    model: 'gpt-4.1-mini',
-    instructions:
-      'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Use tools when they are relevant.',
-    input: [
-      {
-        role: 'user',
-        content: [{ type: 'input_text', text: message }],
-      },
-    ],
-    tools: [
-      {
-        type: 'function',
-        name: 'get_current_time',
-        description: 'Returns the current local time for the Electron app runtime.',
-        parameters: {
-          type: 'object',
-          properties: {},
-          additionalProperties: false,
+  while (true) {
+    const response = await client.chat.completions.create({
+      model: LLM_STUDIO_MODEL,
+      messages,
+      tool_choice: 'auto',
+      tools: [
+        {
+          type: 'function',
+          function: {
+            name: 'get_current_time',
+            description: 'Returns the current local time for the Electron app runtime.',
+            parameters: {
+              type: 'object',
+              properties: {},
+              additionalProperties: false,
+            },
+          },
         },
-      },
-    ],
-  });
-
-  while (response.output?.some((item) => item.type === 'function_call')) {
-    const toolOutputs = response.output
-      .filter((item) => item.type === 'function_call')
-      .map((item) => {
-        if (item.name !== 'get_current_time') {
-          throw new Error(`Unsupported tool call: ${item.name}`);
-        }
-
-        return {
-          type: 'function_call_output',
-          call_id: item.call_id,
-          output: JSON.stringify(getCurrentTime()),
-        };
-      });
-
-    response = await client.responses.create({
-      model: 'gpt-4.1-mini',
-      previous_response_id: response.id,
-      input: toolOutputs,
+      ],
     });
-  }
 
-  return response.output_text?.trim() || 'Нет ответа от модели.';
+    const choice = response.choices?.[0];
+    const assistantMessage = choice?.message;
+
+    if (!assistantMessage) {
+      return 'Нет ответа от модели.';
+    }
+
+    messages.push(assistantMessage);
+
+    if (!assistantMessage.tool_calls?.length) {
+      if (typeof assistantMessage.content === 'string') {
+        return assistantMessage.content.trim() || 'Нет ответа от модели.';
+      }
+
+      if (Array.isArray(assistantMessage.content)) {
+        const text = assistantMessage.content
+          .map((item) => (item?.type === 'text' ? item.text : ''))
+          .join('')
+          .trim();
+
+        return text || 'Нет ответа от модели.';
+      }
+
+      return 'Нет ответа от модели.';
+    }
+
+    for (const toolCall of assistantMessage.tool_calls) {
+      if (toolCall.function?.name !== 'get_current_time') {
+        throw new Error(`Unsupported tool call: ${toolCall.function?.name || 'unknown'}`);
+      }
+
+      messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(getCurrentTime()),
+      });
+    }
+  }
 }
 
 module.exports = {
