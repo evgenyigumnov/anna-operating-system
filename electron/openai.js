@@ -23,7 +23,21 @@ async function createOpenAIClient() {
   });
 }
 
-async function runInference(message) {
+function normalizeConversation(conversation) {
+  return conversation
+    .filter((entry) => entry && typeof entry.content === 'string')
+    .map((entry) => {
+      const role = entry.role === 'assistant' ? 'assistant' : 'user';
+
+      return {
+        role,
+        content: entry.content.trim(),
+      };
+    })
+    .filter((entry) => entry.content);
+}
+
+async function runInference(conversation) {
   const client = await createOpenAIClient();
   const messages = [
     {
@@ -31,11 +45,12 @@ async function runInference(message) {
       content:
         'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Use tools when they are relevant.',
     },
-    {
-      role: 'user',
-      content: message,
-    },
+    ...normalizeConversation(conversation),
   ];
+
+  if (messages.length === 1) {
+    throw new Error('Conversation is empty');
+  }
 
   while (true) {
     const response = await client.chat.completions.create({

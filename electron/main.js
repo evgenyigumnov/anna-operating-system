@@ -6,8 +6,8 @@ app.commandLine.appendSwitch('no-sandbox');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
-    width: 520,
-    height: 560,
+    width: 680,
+    height: 760,
     resizable: false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -25,12 +25,12 @@ app.whenReady().then(() => {
     app.quit();
   });
 
-  ipcMain.handle('app:infer', async (_event, message) => {
-    if (typeof message !== 'string' || !message.trim()) {
-      throw new Error('Message is required');
+  ipcMain.handle('app:infer', async (_event, conversation) => {
+    if (!Array.isArray(conversation) || conversation.length === 0) {
+      throw new Error('Conversation is required');
     }
 
-    return runInference(message.trim());
+    return runInference(conversation);
   });
 
   createWindow();
