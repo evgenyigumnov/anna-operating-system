@@ -95,6 +95,10 @@ function logInferenceError(error, metadata = {}) {
   });
 }
 
+function logTaskEvent(eventName, payload) {
+  writeInfo(eventName, payload);
+}
+
 module.exports = {
   logUserMessage,
   logAssistantMessage,
@@ -102,4 +106,5 @@ module.exports = {
   logToolCall,
   logToolResult,
   logInferenceError,
+  logTaskEvent,
 };

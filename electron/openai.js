@@ -326,6 +326,7 @@ async function runInference(conversation, options = {}) {
 }
 
 module.exports = {
+  extractTextContent,
   runInference,
   runInferenceSession,
 };

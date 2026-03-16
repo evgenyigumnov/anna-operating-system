@@ -2,6 +2,7 @@ const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { loadIdentity } = require('./identity');
 const { runInferenceSession } = require('./openai');
+const { startTaskRunner } = require('./task-runner');
 const { logInferenceError, logUserMessage } = require('./logger');
 
 app.commandLine.appendSwitch('no-sandbox');
@@ -89,6 +90,11 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+  startTaskRunner().catch((error) => {
+    logInferenceError(error, {
+      stage: 'task_runner_startup',
+    });
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
