@@ -1,5 +1,6 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
+const { loadIdentity } = require('./identity');
 const { runInferenceSession } = require('./openai');
 const { logInferenceError, logUserMessage } = require('./logger');
 
@@ -31,6 +32,8 @@ app.whenReady().then(() => {
   ipcMain.handle('app:quit', () => {
     app.quit();
   });
+
+  ipcMain.handle('app:get-identity', () => loadIdentity());
 
   ipcMain.handle('app:infer', async (event, payload) => {
     const conversation = payload?.conversation;

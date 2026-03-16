@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
+  getIdentity: () => ipcRenderer.invoke('app:get-identity'),
   inferStream: async (conversation, handlers = {}) => {
     const requestId =
       typeof crypto?.randomUUID === 'function'

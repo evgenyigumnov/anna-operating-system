@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-const STORAGE_KEY = 'anna-conversation-history';
+const STORAGE_KEY = 'assistant-conversation-history';
+const DEFAULT_ASSISTANT_NAME = 'Анна';
 
 function loadConversation() {
   try {
@@ -33,7 +34,36 @@ function App() {
   const [message, setMessage] = useState('');
   const [conversation, setConversation] = useState(loadConversation);
   const [isLoading, setIsLoading] = useState(false);
+  const [assistantName, setAssistantName] = useState(DEFAULT_ASSISTANT_NAME);
   const conversationRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    window.appControls
+      .getIdentity()
+      .then((identity) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const nextAssistantName = identity?.name?.trim() || DEFAULT_ASSISTANT_NAME;
+        setAssistantName(nextAssistantName);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setAssistantName(DEFAULT_ASSISTANT_NAME);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = `${assistantName} Operating System`;
+  }, [assistantName]);
 
   useEffect(() => {
     if (!conversationRef.current) {
@@ -136,7 +166,7 @@ function App() {
                 className={`conversation-line conversation-line--${entry.role}`}
               >
                 <div className="conversation-author">
-                  {entry.role === 'user' ? 'Вы' : 'Anna'}
+                  {entry.role === 'user' ? 'Вы' : assistantName}
                 </div>
                 <div className="conversation-content">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -154,7 +184,7 @@ function App() {
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleMessageKeyDown}
-          placeholder="Введите сообщение для Anna"
+          placeholder={`Введите сообщение для ${assistantName}`}
           rows="4"
         />
         <div className="actions">
