@@ -2,7 +2,7 @@ module.exports = {
   definition: {
     type: 'function',
     function: {
-      name: 'get_current_time',
+      name: 'get_cДurrent_time',
       description: 'Returns the current local time for the Electron app runtime.',
       parameters: {
         type: 'object',
