@@ -24,6 +24,13 @@ button {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
 button:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 24px rgba(244, 185, 66, 0.24);
@@ -42,9 +49,8 @@ button:hover {
 .card {
   width: min(100%, 360px);
   display: grid;
-  gap: 24px;
+  gap: 16px;
   padding: 32px 28px;
-  text-align: center;
   border-radius: 24px;
   background: rgba(17, 24, 39, 0.86);
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45);
@@ -54,4 +60,36 @@ button:hover {
   margin: 0;
   font-size: 2rem;
   line-height: 1.2;
+  text-align: center;
+}
+
+.conversation {
+  min-height: 72px;
+  margin: 0;
+  padding: 14px 16px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+  border-radius: 16px;
+  background: rgba(30, 41, 59, 0.95);
+}
+
+.message-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  padding: 14px 16px;
+  font: inherit;
+  color: inherit;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.secondary-button {
+  color: #f5efe4;
+  background: rgba(71, 85, 105, 0.9);
+}
+
+.secondary-button:hover {
+  box-shadow: 0 10px 24px rgba(71, 85, 105, 0.24);
 }
