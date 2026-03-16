@@ -1,0 +1,20 @@
+{
+  "name": "anna-operating-system",
+  "version": "1.0.0",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "node ./node_modules/vite/bin/vite.js",
+    "build": "node ./node_modules/vite/bin/vite.js build",
+    "start": "npm run build && node ./node_modules/electron/cli.js --no-sandbox ."
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^36.0.0",
+    "vite": "^5.4.10"
+  }
+}
