@@ -65,6 +65,13 @@ function logAssistantMessage(content, metadata = {}) {
   });
 }
 
+function logSystemPrompt(content, metadata = {}) {
+  writeInfo('system_prompt', {
+    ...metadata,
+    content,
+  });
+}
+
 function logToolCall(toolName, args, metadata = {}) {
   writeInfo('tool_call', {
     ...metadata,
@@ -91,6 +98,7 @@ function logInferenceError(error, metadata = {}) {
 module.exports = {
   logUserMessage,
   logAssistantMessage,
+  logSystemPrompt,
   logToolCall,
   logToolResult,
   logInferenceError,

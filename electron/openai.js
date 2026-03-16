@@ -4,6 +4,7 @@ const { buildIdentityPrompt, loadIdentity } = require('./identity');
 const {
   logAssistantMessage,
   logInferenceError,
+  logSystemPrompt,
   logToolCall,
   logToolResult,
 } = require('./logger');
@@ -16,7 +17,7 @@ const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:11434/v1';
 const LLM_STUDIO_MODEL = 'gpt-oss:120b-cloud';
 
 const DEFAULT_SYSTEM_PROMPT =
-  'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Format every final answer as Markdown. Use tools when they are relevant.';
+  'Format every final answer as Markdown. Use tools when they are relevant.';
 
 function buildSystemPrompt(options = {}) {
   const basePrompt =
@@ -155,6 +156,9 @@ async function runInferenceSession(conversation, options = {}) {
     let stream;
 
     try {
+      logSystemPrompt(systemPrompt, {
+        messageCount: messages.length,
+      });
       stream = await client.chat.completions.create({
         model: LLM_STUDIO_MODEL,
         messages,
