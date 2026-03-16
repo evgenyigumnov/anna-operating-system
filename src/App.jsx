@@ -26,9 +26,6 @@ function App() {
     }
   };
 
-  const handleQuit = async () => {
-    await window.appControls.quit();
-  };
 
   return (
     <main className="app">
@@ -44,9 +41,6 @@ function App() {
         />
         <button type="button" onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? 'Отправка...' : 'Отправить'}
-        </button>
-        <button type="button" className="secondary-button" onClick={handleQuit}>
-          Выйти из приложения
         </button>
       </section>
     </main>
