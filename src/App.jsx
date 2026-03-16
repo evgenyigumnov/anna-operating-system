@@ -2,28 +2,36 @@ import { useEffect, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'anna-conversation-history';
 
-function App() {
-  const [message, setMessage] = useState('');
-  const [conversation, setConversation] = useState(() => {
-    try {
-      const savedConversation = window.localStorage.getItem(STORAGE_KEY);
+function loadConversation() {
+  try {
+    const savedConversation = window.localStorage.getItem(STORAGE_KEY);
 
-      if (!savedConversation) {
-        return [];
-      }
-
-      const parsedConversation = JSON.parse(savedConversation);
-      return Array.isArray(parsedConversation) ? parsedConversation : [];
-    } catch (_error) {
+    if (!savedConversation) {
       return [];
     }
-  });
+
+    const parsedConversation = JSON.parse(savedConversation);
+    return Array.isArray(parsedConversation) ? parsedConversation : [];
+  } catch (_error) {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return [];
+  }
+}
+
+function persistConversation(nextConversation) {
+  if (!nextConversation.length) {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return;
+  }
+
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextConversation));
+}
+
+function App() {
+  const [message, setMessage] = useState('');
+  const [conversation, setConversation] = useState(loadConversation);
   const [isLoading, setIsLoading] = useState(false);
   const conversationRef = useRef(null);
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(conversation));
-  }, [conversation]);
 
   useEffect(() => {
     if (!conversationRef.current) {
@@ -49,20 +57,27 @@ function App() {
     ];
 
     setConversation(nextConversation);
+    persistConversation(nextConversation);
 
     try {
       const reply = await window.appControls.infer(nextConversation);
-      setConversation([
+      const completedConversation = [
         ...nextConversation,
         { role: 'assistant', content: reply },
-      ]);
+      ];
+
+      setConversation(completedConversation);
+      persistConversation(completedConversation);
     } catch (error) {
       const details =
         error instanceof Error ? error.message : 'Не удалось получить ответ.';
-      setConversation([
+      const failedConversation = [
         ...nextConversation,
         { role: 'assistant', content: `Ошибка: ${details}` },
-      ]);
+      ];
+
+      setConversation(failedConversation);
+      persistConversation(failedConversation);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +90,7 @@ function App() {
 
     setConversation([]);
     setMessage('');
-    window.localStorage.removeItem(STORAGE_KEY);
+    persistConversation([]);
   };
 
   return (
