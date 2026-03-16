@@ -5,7 +5,7 @@ Every minute
 # Instructions
 
 1. Run: lynx -nolist -dump -image_links=0 https://www.nytimes.com/
-2. If you find something about "trump", just inform about this. If you already informed about this, return KEEP_SILENCE
+2. If you find something about "trump", just inform about this. If your already informed about this, return KEEP_SILENCE
 3. Else keep silence
 
 # History
