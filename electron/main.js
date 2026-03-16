@@ -13,6 +13,15 @@ function sendInferenceEvent(webContents, channel, payload) {
   }
 }
 
+function broadcastRendererEvent(channel, payload) {
+  for (const window of BrowserWindow.getAllWindows()) {
+    const { webContents } = window;
+    if (!webContents.isDestroyed()) {
+      webContents.send(channel, payload);
+    }
+  }
+}
+
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1020,
@@ -81,8 +90,7 @@ app.whenReady().then(() => {
 
       sendInferenceEvent(event.sender, 'app:infer:error', {
         requestId,
-        message:
-          error instanceof Error ? error.message : 'Не удалось получить ответ.',
+        message: error instanceof Error ? error.message : 'Failed to get a reply.',
       });
 
       throw error;
@@ -90,7 +98,11 @@ app.whenReady().then(() => {
   });
 
   createWindow();
-  startTaskRunner().catch((error) => {
+  startTaskRunner({
+    onTaskResult(taskResult) {
+      broadcastRendererEvent('app:task-result', taskResult);
+    },
+  }).catch((error) => {
     logInferenceError(error, {
       stage: 'task_runner_startup',
     });

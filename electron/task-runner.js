@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { Notification } = require('electron');
 const { loadMarkdownConfig } = require('./markdown-config');
 const { runInferenceSession, extractTextContent } = require('./openai');
 const { logInferenceError, logTaskEvent } = require('./logger');
@@ -221,7 +220,7 @@ function clearTaskTimer(taskId) {
   }
 }
 
-function scheduleNextRun(taskConfig, scheduleConfig) {
+function scheduleNextRun(taskConfig, scheduleConfig, options = {}) {
   if (scheduleConfig.kind !== 'interval' || !scheduleConfig.intervalMs) {
     return;
   }
@@ -229,7 +228,7 @@ function scheduleNextRun(taskConfig, scheduleConfig) {
   clearTaskTimer(taskConfig.id);
 
   const timer = setTimeout(() => {
-    runTask(taskConfig).catch((error) => {
+    runTask(taskConfig, options).catch((error) => {
       logInferenceError(error, {
         stage: 'task_scheduled_run',
         taskId: taskConfig.id,
@@ -246,25 +245,17 @@ function normalizeTaskOutput(rawResult) {
   return trimText(text);
 }
 
-function truncateForNotification(value, limit = 240) {
-  if (typeof value !== 'string' || value.length <= limit) {
-    return value;
-  }
-
-  return `${value.slice(0, limit - 3)}...`;
-}
-
-function publishTaskResult(taskConfig, output) {
-  if (!output || output === 'SILENT' || !Notification.isSupported()) {
+function publishTaskResult(taskConfig, output, options = {}) {
+  if (!output || output === 'SILENT') {
     return;
   }
 
-  const notification = new Notification({
-    title: `Task result: ${taskConfig.fileName}`,
-    body: truncateForNotification(output),
+  options.onTaskResult?.({
+    taskId: taskConfig.id,
+    fileName: taskConfig.fileName,
+    output,
+    createdAt: new Date().toISOString(),
   });
-
-  notification.show();
 }
 
 async function executeTask(taskConfig, taskState) {
@@ -302,7 +293,7 @@ function persistTaskResult(taskConfig, output, taskState) {
   };
 }
 
-async function runTask(taskConfig) {
+async function runTask(taskConfig, options = {}) {
   if (runningTasks.has(taskConfig.id)) {
     logTaskEvent('task_skipped_already_running', {
       taskId: taskConfig.id,
@@ -338,7 +329,7 @@ async function runTask(taskConfig) {
       fileName: taskConfig.fileName,
       output,
     });
-    publishTaskResult(taskConfig, output);
+    publishTaskResult(taskConfig, output, options);
 
     if (scheduleConfig.kind === 'once') {
       fs.unlinkSync(taskConfig.filePath);
@@ -352,7 +343,7 @@ async function runTask(taskConfig) {
       return;
     }
 
-    scheduleNextRun(taskConfig, scheduleConfig);
+    scheduleNextRun(taskConfig, scheduleConfig, options);
   } catch (error) {
     logInferenceError(error, {
       stage: 'task_execution',
@@ -366,7 +357,7 @@ async function runTask(taskConfig) {
       }
 
       if (scheduleConfig.kind === 'interval') {
-        scheduleNextRun(taskConfig, scheduleConfig);
+        scheduleNextRun(taskConfig, scheduleConfig, options);
       }
     } catch (_scheduleError) {
       // Ignore schedule parse errors here because the original error is already logged.
@@ -394,7 +385,7 @@ function cleanupStateForMissingTasks(taskFiles) {
   }
 }
 
-async function startTaskRunner() {
+async function startTaskRunner(options = {}) {
   const taskFiles = listTaskFiles();
   cleanupStateForMissingTasks(taskFiles);
 
@@ -415,7 +406,7 @@ async function startTaskRunner() {
     })),
   });
 
-  await Promise.allSettled(taskConfigs.map((taskConfig) => runTask(taskConfig)));
+  await Promise.allSettled(taskConfigs.map((taskConfig) => runTask(taskConfig, options)));
 }
 
 module.exports = {

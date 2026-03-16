@@ -3,6 +3,21 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
   getIdentity: () => ipcRenderer.invoke('app:get-identity'),
+  onTaskResult: (handler) => {
+    if (typeof handler !== 'function') {
+      return () => {};
+    }
+
+    const listener = (_event, payload) => {
+      handler(payload);
+    };
+
+    ipcRenderer.on('app:task-result', listener);
+
+    return () => {
+      ipcRenderer.removeListener('app:task-result', listener);
+    };
+  },
   inferStream: async (conversation, handlers = {}) => {
     const requestId =
       typeof crypto?.randomUUID === 'function'
@@ -30,7 +45,7 @@ contextBridge.exposeInMainWorld('appControls', {
         (_event, payload) => {
           if (payload?.requestId === requestId) {
             handlers.onError?.(
-              new Error(payload?.message || 'Не удалось получить ответ.'),
+              new Error(payload?.message || 'Failed to get a reply.'),
             );
           }
         },

@@ -5,6 +5,10 @@ import remarkGfm from 'remark-gfm';
 const STORAGE_KEY = 'assistant-conversation-history';
 const DEFAULT_ASSISTANT_NAME = 'Анна';
 
+function appendConversationEntry(currentConversation, nextEntry) {
+  return [...currentConversation, nextEntry];
+}
+
 function loadConversation() {
   try {
     const savedConversation = window.localStorage.getItem(STORAGE_KEY);
@@ -66,6 +70,34 @@ function App() {
   }, [assistantName]);
 
   useEffect(() => {
+    const unsubscribe = window.appControls.onTaskResult((taskResult) => {
+      const output = taskResult?.output?.trim();
+      const fileName = taskResult?.fileName?.trim();
+
+      if (!output) {
+        return;
+      }
+
+      const nextEntry = {
+        role: 'assistant',
+        content: fileName
+          ? `Task result from \`${fileName}\`\n\n${output}`
+          : output,
+      };
+
+      setConversation((currentConversation) => {
+        const nextConversation = appendConversationEntry(currentConversation, nextEntry);
+        persistConversation(nextConversation);
+        return nextConversation;
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!conversationRef.current) {
       return;
     }
@@ -113,20 +145,20 @@ function App() {
         },
       });
 
-      const completedConversation = [
-        ...nextConversation.slice(0, -1),
-        { role: 'assistant', content: reply },
-      ];
+      const completedConversation = appendConversationEntry(nextConversation.slice(0, -1), {
+        role: 'assistant',
+        content: reply,
+      });
 
       setConversation(completedConversation);
       persistConversation(completedConversation);
     } catch (error) {
       const details =
-        error instanceof Error ? error.message : 'Cant recieve reply.';
-      const failedConversation = [
-        ...nextConversation.slice(0, -1),
-        { role: 'assistant', content: `Ошибка: ${details}` },
-      ];
+        error instanceof Error ? error.message : 'Cannot receive reply.';
+      const failedConversation = appendConversationEntry(nextConversation.slice(0, -1), {
+        role: 'assistant',
+        content: `Error: ${details}`,
+      });
 
       setConversation(failedConversation);
       persistConversation(failedConversation);
