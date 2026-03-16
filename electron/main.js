@@ -7,7 +7,7 @@ app.commandLine.appendSwitch('no-sandbox');
 function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 680,
-    height: 760,
+    height: 988,
     resizable: false,
     autoHideMenuBar: true,
     webPreferences: {
