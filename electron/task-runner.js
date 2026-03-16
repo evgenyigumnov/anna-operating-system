@@ -52,6 +52,28 @@ function saveState(state) {
   fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(state, null, 2));
 }
 
+function saveTaskState(taskId, updateTaskState) {
+  const latestState = loadState();
+  const currentTaskState = latestState.tasks?.[taskId] || {};
+  const nextTaskState = updateTaskState(currentTaskState, latestState);
+
+  latestState.tasks[taskId] = nextTaskState;
+  saveState(latestState);
+
+  return latestState;
+}
+
+function deleteTaskState(taskId) {
+  const latestState = loadState();
+
+  if (latestState.tasks && Object.prototype.hasOwnProperty.call(latestState.tasks, taskId)) {
+    delete latestState.tasks[taskId];
+    saveState(latestState);
+  }
+
+  return latestState;
+}
+
 function listTaskFiles() {
   ensureTasksDirectory();
 
@@ -324,8 +346,7 @@ async function runTask(taskConfig, options = {}) {
     const execution = await executeTask(taskConfig, taskState);
     const output = execution.output || SILENCE_TOKEN;
 
-    state.tasks[taskConfig.id] = persistTaskResult(taskConfig, output, taskState);
-    saveState(state);
+    saveTaskState(taskConfig.id, (latestTaskState) => persistTaskResult(taskConfig, output, latestTaskState));
 
     logTaskEvent('task_finished', {
       taskId: taskConfig.id,
@@ -336,8 +357,7 @@ async function runTask(taskConfig, options = {}) {
 
     if (scheduleConfig.kind === 'once') {
       fs.unlinkSync(taskConfig.filePath);
-      delete state.tasks[taskConfig.id];
-      saveState(state);
+      deleteTaskState(taskConfig.id);
 
       logTaskEvent('task_deleted_after_success', {
         taskId: taskConfig.id,
