@@ -66,8 +66,8 @@ button:hover {
 }
 
 .conversation {
-  min-height: 240px;
-  max-height: 360px;
+  min-height: 460px;
+  max-height: 460px;
   margin: 0;
   padding: 18px 20px;
   line-height: 1.5;
