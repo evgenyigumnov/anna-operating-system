@@ -1,6 +1,7 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { runInference } = require('./openai');
+const { logInferenceError, logUserMessage } = require('./logger');
 
 app.commandLine.appendSwitch('no-sandbox');
 
@@ -30,7 +31,24 @@ app.whenReady().then(() => {
       throw new Error('Conversation is required');
     }
 
-    return runInference(conversation);
+    const latestUserMessage = [...conversation]
+      .reverse()
+      .find((entry) => entry?.role === 'user' && typeof entry.content === 'string');
+
+    if (latestUserMessage?.content?.trim()) {
+      logUserMessage(latestUserMessage.content.trim(), {
+        conversationLength: conversation.length,
+      });
+    }
+
+    try {
+      return await runInference(conversation);
+    } catch (error) {
+      logInferenceError(error, {
+        conversationLength: conversation.length,
+      });
+      throw error;
+    }
   });
 
   createWindow();

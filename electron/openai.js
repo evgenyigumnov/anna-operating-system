@@ -1,5 +1,11 @@
 const fs = require('fs');
 const path = require('path');
+const {
+  logAssistantMessage,
+  logInferenceError,
+  logToolCall,
+  logToolResult,
+} = require('./logger');
 
 const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
 const LLM_STUDIO_MODEL = 'unsloth/qwen3.5-9b';
@@ -133,12 +139,22 @@ async function runInferenceSession(conversation, options = {}) {
   }
 
   while (true) {
-    const response = await client.chat.completions.create({
-      model: LLM_STUDIO_MODEL,
-      messages,
-      tool_choice: 'auto',
-      tools,
-    });
+    let response;
+
+    try {
+      response = await client.chat.completions.create({
+        model: LLM_STUDIO_MODEL,
+        messages,
+        tool_choice: 'auto',
+        tools,
+      });
+    } catch (error) {
+      logInferenceError(error, {
+        stage: 'chat_completion',
+        messageCount: messages.length,
+      });
+      throw error;
+    }
 
     const choice = response.choices?.[0];
     const assistantMessage = choice?.message;
@@ -152,6 +168,10 @@ async function runInferenceSession(conversation, options = {}) {
 
     messages.push(assistantMessage);
     const assistantText = extractTextContent(assistantMessage.content);
+    logAssistantMessage(assistantText, {
+      hasToolCalls: Boolean(assistantMessage.tool_calls?.length),
+      messageCount: messages.length,
+    });
 
     if (!assistantMessage.tool_calls?.length) {
       return {
@@ -180,16 +200,34 @@ async function runInferenceSession(conversation, options = {}) {
 
       const rawArguments = toolCall.function?.arguments;
       const parsedArguments = rawArguments ? JSON.parse(rawArguments) : {};
-      const result = await toolHandler(parsedArguments, {
-        runInference,
-        runInferenceSession,
-        availableToolNames: tools.map((tool) => tool.function?.name).filter(Boolean),
+      logToolCall(toolName, parsedArguments, {
+        toolCallId: toolCall.id,
       });
+
+      let result;
+
+      try {
+        result = await toolHandler(parsedArguments, {
+          runInference,
+          runInferenceSession,
+          availableToolNames: tools.map((tool) => tool.function?.name).filter(Boolean),
+        });
+      } catch (error) {
+        logInferenceError(error, {
+          stage: 'tool_execution',
+          toolName,
+          toolCallId: toolCall.id,
+        });
+        throw error;
+      }
 
       messages.push({
         role: 'tool',
         tool_call_id: toolCall.id,
         content: JSON.stringify(result),
+      });
+      logToolResult(toolName, result, {
+        toolCallId: toolCall.id,
       });
 
       stepHistory.push({

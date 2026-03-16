@@ -9,6 +9,7 @@
     "start": "npm run build && node ./node_modules/electron/cli.js --no-sandbox ."
   },
   "dependencies": {
+    "electron-log": "^5.4.3",
     "openai": "^6.29.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
