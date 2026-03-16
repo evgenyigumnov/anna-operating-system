@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const STORAGE_KEY = 'anna-conversation-history';
 
@@ -109,15 +111,19 @@ function App() {
         <div className="conversation" ref={conversationRef}>
           {conversation.length ? (
             conversation.map((entry, index) => (
-              <p
+              <article
                 key={`${entry.role}-${index}`}
                 className={`conversation-line conversation-line--${entry.role}`}
               >
-                <span className="conversation-author">
-                  {entry.role === 'user' ? 'Вы' : 'Anna'}:
-                </span>{' '}
-                {entry.content}
-              </p>
+                <div className="conversation-author">
+                  {entry.role === 'user' ? 'Вы' : 'Anna'}
+                </div>
+                <div className="conversation-content">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {entry.content}
+                  </ReactMarkdown>
+                </div>
+              </article>
             ))
           ) : (
             <p className="conversation-placeholder">История переписки пока пуста.</p>
