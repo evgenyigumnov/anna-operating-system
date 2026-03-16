@@ -93,6 +93,15 @@ function App() {
     persistConversation([]);
   };
 
+  const handleMessageKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+    handleSubmit();
+  };
+
   return (
     <main className="app">
       <section className="card">
@@ -118,6 +127,7 @@ function App() {
           className="message-input"
           value={message}
           onChange={(event) => setMessage(event.target.value)}
+          onKeyDown={handleMessageKeyDown}
           placeholder="Введите сообщение для Anna"
           rows="4"
         />
