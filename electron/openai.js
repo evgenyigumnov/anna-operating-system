@@ -3,6 +3,8 @@ const path = require('path');
 
 const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
 const LLM_STUDIO_MODEL = 'unsloth/qwen3.5-9b';
+const DEFAULT_SYSTEM_PROMPT =
+  'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Use tools when they are relevant.';
 
 async function createOpenAIClient() {
   let OpenAI;
@@ -33,8 +35,11 @@ function normalizeConversation(conversation) {
     .filter((entry) => entry.content);
 }
 
-function loadTools() {
+function loadTools(options = {}) {
   const toolsDirectory = path.join(__dirname, 'tools');
+  const excludedToolNames = new Set(
+    Array.isArray(options.excludedToolNames) ? options.excludedToolNames : [],
+  );
 
   if (!fs.existsSync(toolsDirectory)) {
     return {
@@ -78,6 +83,10 @@ function loadTools() {
       throw new Error(`Duplicate tool name detected: ${toolName}`);
     }
 
+    if (excludedToolNames.has(toolName)) {
+      continue;
+    }
+
     definitions.push(definition);
     handlers.set(toolName, handler);
   }
@@ -88,14 +97,33 @@ function loadTools() {
   };
 }
 
-async function runInference(conversation) {
+function extractTextContent(content) {
+  if (typeof content === 'string') {
+    return content.trim();
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => (item?.type === 'text' ? item.text : ''))
+      .join('')
+      .trim();
+  }
+
+  return '';
+}
+
+async function runInferenceSession(conversation, options = {}) {
   const client = await createOpenAIClient();
-  const { definitions: tools, handlers: toolHandlers } = loadTools();
+  const { definitions: tools, handlers: toolHandlers } = loadTools(options);
+  const systemPrompt =
+    typeof options.systemPrompt === 'string' && options.systemPrompt.trim()
+      ? options.systemPrompt.trim()
+      : DEFAULT_SYSTEM_PROMPT;
+  const stepHistory = [];
   const messages = [
     {
       role: 'system',
-      content:
-        'You are Anna. Reply in Russian unless the user explicitly asks otherwise. Use tools when they are relevant.',
+      content: systemPrompt,
     },
     ...normalizeConversation(conversation),
   ];
@@ -116,27 +144,31 @@ async function runInference(conversation) {
     const assistantMessage = choice?.message;
 
     if (!assistantMessage) {
-      return 'Нет ответа от модели.';
+      return {
+        output: 'Нет ответа от модели.',
+        steps: stepHistory,
+      };
     }
 
     messages.push(assistantMessage);
+    const assistantText = extractTextContent(assistantMessage.content);
 
     if (!assistantMessage.tool_calls?.length) {
-      if (typeof assistantMessage.content === 'string') {
-        return assistantMessage.content.trim() || 'Нет ответа от модели.';
-      }
-
-      if (Array.isArray(assistantMessage.content)) {
-        const text = assistantMessage.content
-          .map((item) => (item?.type === 'text' ? item.text : ''))
-          .join('')
-          .trim();
-
-        return text || 'Нет ответа от модели.';
-      }
-
-      return 'Нет ответа от модели.';
+      return {
+        output: assistantText || 'Нет ответа от модели.',
+        steps: stepHistory,
+      };
     }
+
+    stepHistory.push({
+      type: 'assistant_tool_request',
+      content: assistantText || null,
+      toolCalls: assistantMessage.tool_calls.map((toolCall) => ({
+        id: toolCall.id,
+        name: toolCall.function?.name || 'unknown',
+        arguments: toolCall.function?.arguments || '{}',
+      })),
+    });
 
     for (const toolCall of assistantMessage.tool_calls) {
       const toolName = toolCall.function?.name || 'unknown';
@@ -148,17 +180,34 @@ async function runInference(conversation) {
 
       const rawArguments = toolCall.function?.arguments;
       const parsedArguments = rawArguments ? JSON.parse(rawArguments) : {};
-      const result = await toolHandler(parsedArguments);
+      const result = await toolHandler(parsedArguments, {
+        runInference,
+        runInferenceSession,
+        availableToolNames: tools.map((tool) => tool.function?.name).filter(Boolean),
+      });
 
       messages.push({
         role: 'tool',
         tool_call_id: toolCall.id,
         content: JSON.stringify(result),
       });
+
+      stepHistory.push({
+        type: 'tool_result',
+        toolName,
+        arguments: parsedArguments,
+        result,
+      });
     }
   }
 }
 
+async function runInference(conversation, options = {}) {
+  const session = await runInferenceSession(conversation, options);
+  return session.output;
+}
+
 module.exports = {
   runInference,
+  runInferenceSession,
 };
