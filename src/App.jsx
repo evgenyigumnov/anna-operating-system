@@ -183,6 +183,28 @@ function App() {
   }, [assistantName]);
 
   useEffect(() => {
+
+    const unsubscribe = window.appControls.onTaskResult((taskResult) => {
+      const output = taskResult?.output?.trim();
+      const fileName = taskResult?.fileName?.trim();
+
+      if (!output) {
+        return;
+      }
+
+      const nextEntry = {
+        role: 'assistant',
+        content: output,
+      };
+
+      setConversation((currentConversation) => {
+        const nextConversation = appendConversationEntry(currentConversation, nextEntry);
+        persistConversation(nextConversation);
+        return nextConversation;
+      });
+    });
+
+
     return () => {
       unsubscribe();
     };
