@@ -4,4 +4,4 @@ After 1 minute
 
 # Instructions
 
-Just a reminde me to call my mom
+Say what I need to call to my mom
