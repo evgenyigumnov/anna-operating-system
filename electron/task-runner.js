@@ -240,7 +240,18 @@ async function executeTask(taskConfig, taskState) {
       step_history: stepHistory,
     },
     {
-      runInferenceSession,
+      runInferenceSession: (conversation, options = {}) => {
+        const excludedToolNames = new Set(
+          Array.isArray(options.excludedToolNames) ? options.excludedToolNames : [],
+        );
+
+        excludedToolNames.add('manage_tasks');
+
+        return runInferenceSession(conversation, {
+          ...options,
+          excludedToolNames: [...excludedToolNames],
+        });
+      },
     },
   );
 
