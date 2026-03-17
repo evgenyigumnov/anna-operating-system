@@ -1,116 +1,27 @@
 const fs = require('fs');
 const path = require('path');
-const { loadMarkdownConfig } = require('./markdown-config');
 const { runInferenceSession, extractTextContent } = require('./openai');
 const { logInferenceError, logTaskEvent } = require('./logger');
+const {
+  MAX_HISTORY_ITEMS,
+  TASKS_DIRECTORY,
+  deleteTaskFile,
+  deleteTaskState,
+  listTaskFiles,
+  loadState,
+  parseTaskFile,
+  saveState,
+  saveTaskState,
+  trimText,
+} = require('./task-storage');
 
-const TASKS_DIRECTORY = path.join(__dirname, 'tasks');
-const STATE_FILE_PATH = path.join(TASKS_DIRECTORY, '.task-runner-state.json');
-const MAX_HISTORY_ITEMS = 20;
 const SILENCE_TOKEN = 'KEEP_SILENCE';
 
 const taskFromStepsTool = require('./tools/task_from_steps');
 
-const headingToField = new Map([
-  ['schedule', 'schedule'],
-  ['instructions', 'instructions'],
-  ['history', 'history'],
-  ['context', 'history'],
-]);
-
 const taskTimers = new Map();
 const runningTasks = new Set();
-
-function trimText(value) {
-  if (typeof value !== 'string') {
-    return '';
-  }
-
-  return value.trim();
-}
-
-function ensureTasksDirectory() {
-  if (!fs.existsSync(TASKS_DIRECTORY)) {
-    fs.mkdirSync(TASKS_DIRECTORY, { recursive: true });
-  }
-}
-
-function loadState() {
-  ensureTasksDirectory();
-
-  try {
-    const rawState = fs.readFileSync(STATE_FILE_PATH, 'utf8');
-    const parsedState = JSON.parse(rawState);
-    return parsedState && typeof parsedState === 'object' ? parsedState : { tasks: {} };
-  } catch (_error) {
-    return { tasks: {} };
-  }
-}
-
-function saveState(state) {
-  ensureTasksDirectory();
-  fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(state, null, 2));
-}
-
-function saveTaskState(taskId, updateTaskState) {
-  const latestState = loadState();
-  const currentTaskState = latestState.tasks?.[taskId] || {};
-  const nextTaskState = updateTaskState(currentTaskState, latestState);
-
-  latestState.tasks[taskId] = nextTaskState;
-  saveState(latestState);
-
-  return latestState;
-}
-
-function deleteTaskState(taskId) {
-  const latestState = loadState();
-
-  if (latestState.tasks && Object.prototype.hasOwnProperty.call(latestState.tasks, taskId)) {
-    delete latestState.tasks[taskId];
-    saveState(latestState);
-  }
-
-  return latestState;
-}
-
-function listTaskFiles() {
-  ensureTasksDirectory();
-
-  return fs
-    .readdirSync(TASKS_DIRECTORY, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(TASKS_DIRECTORY, entry.name))
-    .sort();
-}
-
-function parseTaskFile(filePath) {
-  const parsed = loadMarkdownConfig(filePath, {
-    defaults: {
-      schedule: 'ASAP',
-      instructions: '',
-      history: 'No',
-    },
-    headingToField,
-  });
-
-  const schedule = trimText(parsed.schedule);
-  const instructions = trimText(parsed.instructions);
-  const history = trimText(parsed.history);
-
-  if (!instructions) {
-    throw new Error(`Task file "${path.basename(filePath)}" does not contain instructions.`);
-  }
-
-  return {
-    id: path.basename(filePath, '.md'),
-    filePath,
-    fileName: path.basename(filePath),
-    schedule,
-    instructions,
-    history,
-  };
-}
+let runnerOptions = {};
 
 function convertToMilliseconds(amount, unit) {
   const normalizedUnit = unit.toLowerCase();
@@ -456,6 +367,51 @@ async function runTask(taskConfig, options = {}) {
   }
 }
 
+async function registerTask(taskFilePath, options = runnerOptions) {
+  const taskConfig = parseTaskFile(taskFilePath);
+  const scheduleConfig = parseSchedule(taskConfig.schedule);
+
+  if (scheduleConfig.kind !== 'delayed_once') {
+    await runTask(taskConfig, options);
+    return taskConfig;
+  }
+
+  const state = loadState();
+  const taskState = state.tasks?.[taskConfig.id] || {};
+  const delayedRunAtMs = getDelayedRunTimestamp(taskConfig, scheduleConfig, taskState);
+
+  if (scheduleDelayedRun(taskConfig, delayedRunAtMs, options)) {
+    logTaskEvent('task_delayed_run_scheduled', {
+      taskId: taskConfig.id,
+      fileName: taskConfig.fileName,
+      schedule: taskConfig.schedule,
+      delayedRunAt: new Date(delayedRunAtMs).toISOString(),
+    });
+    return taskConfig;
+  }
+
+  await runTask(taskConfig, options);
+  return taskConfig;
+}
+
+function unregisterTask(taskId) {
+  const deletedTask = deleteTaskFile(taskId);
+
+  if (!deletedTask) {
+    return null;
+  }
+
+  clearTaskTimer(deletedTask.id);
+  deleteTaskState(deletedTask.id);
+
+  logTaskEvent('task_deleted_by_tool', {
+    taskId: deletedTask.id,
+    fileName: deletedTask.fileName,
+  });
+
+  return deletedTask;
+}
+
 function cleanupStateForMissingTasks(taskFiles) {
   const state = loadState();
   const existingTaskIds = new Set(taskFiles.map((filePath) => path.basename(filePath, '.md')));
@@ -475,6 +431,7 @@ function cleanupStateForMissingTasks(taskFiles) {
 }
 
 async function startTaskRunner(options = {}) {
+  runnerOptions = options;
   const taskFiles = listTaskFiles();
   cleanupStateForMissingTasks(taskFiles);
 
@@ -495,33 +452,11 @@ async function startTaskRunner(options = {}) {
     })),
   });
 
-  await Promise.allSettled(
-    taskConfigs.map(async (taskConfig) => {
-      const scheduleConfig = parseSchedule(taskConfig.schedule);
-
-      if (scheduleConfig.kind !== 'delayed_once') {
-        return runTask(taskConfig, options);
-      }
-
-      const state = loadState();
-      const taskState = state.tasks?.[taskConfig.id] || {};
-      const delayedRunAtMs = getDelayedRunTimestamp(taskConfig, scheduleConfig, taskState);
-
-      if (scheduleDelayedRun(taskConfig, delayedRunAtMs, options)) {
-        logTaskEvent('task_delayed_run_scheduled', {
-          taskId: taskConfig.id,
-          fileName: taskConfig.fileName,
-          schedule: taskConfig.schedule,
-          delayedRunAt: new Date(delayedRunAtMs).toISOString(),
-        });
-        return;
-      }
-
-      return runTask(taskConfig, options);
-    }),
-  );
+  await Promise.allSettled(taskFiles.map((taskFilePath) => registerTask(taskFilePath, options)));
 }
 
 module.exports = {
+  registerTask,
   startTaskRunner,
+  unregisterTask,
 };
