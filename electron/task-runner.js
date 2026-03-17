@@ -189,7 +189,44 @@ function parseSchedule(scheduleValue) {
     };
   }
 
+  const afterPattern = normalized.match(/^after\s+(\d+)\s+(minute|minutes|hour|hours|day|days)$/);
+
+  if (afterPattern) {
+    return {
+      kind: 'delayed_once',
+      delayMs: convertToMilliseconds(afterPattern[1], afterPattern[2]),
+      label: scheduleValue,
+    };
+  }
+
   throw new Error(`Unsupported task schedule: "${scheduleValue}".`);
+}
+
+function getDelayedRunTimestamp(taskConfig, scheduleConfig, taskState) {
+  if (scheduleConfig.kind !== 'delayed_once' || !scheduleConfig.delayMs) {
+    return null;
+  }
+
+  const savedScheduleLabel = trimText(taskState?.delayedScheduleLabel);
+  const savedRunAt = trimText(taskState?.delayedRunAt);
+
+  if (savedScheduleLabel === trimText(taskConfig.schedule) && savedRunAt) {
+    const parsedSavedRunAt = Date.parse(savedRunAt);
+
+    if (Number.isFinite(parsedSavedRunAt)) {
+      return parsedSavedRunAt;
+    }
+  }
+
+  const delayedRunAt = new Date(Date.now() + scheduleConfig.delayMs).toISOString();
+
+  saveTaskState(taskConfig.id, (latestTaskState) => ({
+    ...latestTaskState,
+    delayedScheduleLabel: taskConfig.schedule,
+    delayedRunAt,
+  }));
+
+  return Date.parse(delayedRunAt);
 }
 
 function takeRecentMessages(taskState, limit) {
@@ -315,7 +352,36 @@ function persistTaskResult(taskConfig, output, taskState) {
     lastRunAt: new Date().toISOString(),
     lastOutput: output,
     history: nextHistory.slice(-MAX_HISTORY_ITEMS),
+    delayedScheduleLabel: undefined,
+    delayedRunAt: undefined,
   };
+}
+
+function scheduleDelayedRun(taskConfig, runAtMs, options = {}) {
+  if (!Number.isFinite(runAtMs)) {
+    return false;
+  }
+
+  const delayMs = runAtMs - Date.now();
+
+  if (delayMs <= 0) {
+    return false;
+  }
+
+  clearTaskTimer(taskConfig.id);
+
+  const timer = setTimeout(() => {
+    runTask(taskConfig, options).catch((error) => {
+      logInferenceError(error, {
+        stage: 'task_scheduled_run',
+        taskId: taskConfig.id,
+        fileName: taskConfig.fileName,
+      });
+    });
+  }, delayMs);
+
+  taskTimers.set(taskConfig.id, timer);
+  return true;
 }
 
 async function runTask(taskConfig, options = {}) {
@@ -355,7 +421,7 @@ async function runTask(taskConfig, options = {}) {
     });
     publishTaskResult(taskConfig, output, options);
 
-    if (scheduleConfig.kind === 'once') {
+    if (scheduleConfig.kind === 'once' || scheduleConfig.kind === 'delayed_once') {
       fs.unlinkSync(taskConfig.filePath);
       deleteTaskState(taskConfig.id);
 
@@ -429,7 +495,31 @@ async function startTaskRunner(options = {}) {
     })),
   });
 
-  await Promise.allSettled(taskConfigs.map((taskConfig) => runTask(taskConfig, options)));
+  await Promise.allSettled(
+    taskConfigs.map(async (taskConfig) => {
+      const scheduleConfig = parseSchedule(taskConfig.schedule);
+
+      if (scheduleConfig.kind !== 'delayed_once') {
+        return runTask(taskConfig, options);
+      }
+
+      const state = loadState();
+      const taskState = state.tasks?.[taskConfig.id] || {};
+      const delayedRunAtMs = getDelayedRunTimestamp(taskConfig, scheduleConfig, taskState);
+
+      if (scheduleDelayedRun(taskConfig, delayedRunAtMs, options)) {
+        logTaskEvent('task_delayed_run_scheduled', {
+          taskId: taskConfig.id,
+          fileName: taskConfig.fileName,
+          schedule: taskConfig.schedule,
+          delayedRunAt: new Date(delayedRunAtMs).toISOString(),
+        });
+        return;
+      }
+
+      return runTask(taskConfig, options);
+    }),
+  );
 }
 
 module.exports = {
