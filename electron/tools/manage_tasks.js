@@ -92,7 +92,7 @@ module.exports = {
           },
           instructions: {
             type: 'string',
-            description: 'Task instructions written into the markdown file.',
+            description: 'Task instructions written into the markdown file. Instructions will be parsed by LLM. Instructions should be concise and clear and in human-readable format. Instruction is not shell commands script.',
           },
           recent_runs_for_analysis: {
             type: 'integer',
