@@ -1,6 +1,6 @@
 # Schedule
 
-Every 12 hours
+Every 6 hours
 
 # Instructions
 
@@ -10,4 +10,4 @@ Every 12 hours
 
 # History
 
-Last 5 messages
+Last 4 messages
