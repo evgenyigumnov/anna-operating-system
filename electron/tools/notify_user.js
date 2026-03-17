@@ -6,13 +6,13 @@ module.exports = {
     function: {
       name: 'notify_user',
       description:
-        'Adds a new assistant message to the user conversation in the app. Use it when the user should be proactively notified inside the chat history.',
+        'Send a message to the user. Used for reminders or for sending results of completed tasks',
       parameters: {
         type: 'object',
         properties: {
           message: {
             type: 'string',
-            description: 'Notification text that will be added to the conversation as a new assistant message.',
+            description: 'The text of the message or notification that should be sent to the user.',
           },
         },
         required: ['message'],
