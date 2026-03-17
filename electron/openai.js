@@ -10,7 +10,14 @@ const {
   logUserMessage,
 } = require('./logger');
 
-const OPENAPI_BASE_URL = 'http://192.168.10.12:11434/v1';
+const ENV_FILE_PATH = path.resolve(__dirname, '..', '.env');
+
+if (typeof process.loadEnvFile === 'function' && fs.existsSync(ENV_FILE_PATH)) {
+  process.loadEnvFile(ENV_FILE_PATH);
+}
+
+const OPENAPI_BASE_URL =
+  process.env.OPENAPI_BASE_URL || 'http://127.0.0.1:11434/v1';
 const OPENAPI_MODEL = 'gpt-oss:120b-cloud';
 
 const DEFAULT_SYSTEM_PROMPT =
