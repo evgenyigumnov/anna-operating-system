@@ -211,6 +211,31 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = window.appControls.onConversationMessage((entry) => {
+      const content = entry?.content?.trim();
+
+      if (!content) {
+        return;
+      }
+
+      const nextEntry = {
+        role: entry?.role === 'user' ? 'user' : 'assistant',
+        content,
+      };
+
+      setConversation((currentConversation) => {
+        const nextConversation = appendConversationEntry(currentConversation, nextEntry);
+        persistConversation(nextConversation);
+        return nextConversation;
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!conversationRef.current) {
       return;
     }

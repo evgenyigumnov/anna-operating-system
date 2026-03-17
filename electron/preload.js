@@ -1,5 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+const CONVERSATION_MESSAGE_CHANNEL = 'app:conversation-message';
+
 contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
   getIdentity: () => ipcRenderer.invoke('app:get-identity'),
@@ -22,6 +24,21 @@ contextBridge.exposeInMainWorld('appControls', {
 
     return () => {
       ipcRenderer.removeListener('app:task-result', listener);
+    };
+  },
+  onConversationMessage: (handler) => {
+    if (typeof handler !== 'function') {
+      return () => {};
+    }
+
+    const listener = (_event, payload) => {
+      handler(payload);
+    };
+
+    ipcRenderer.on(CONVERSATION_MESSAGE_CHANNEL, listener);
+
+    return () => {
+      ipcRenderer.removeListener(CONVERSATION_MESSAGE_CHANNEL, listener);
     };
   },
   inferStream: async (conversation, handlers = {}) => {
