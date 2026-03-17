@@ -6,6 +6,9 @@ The current identity of the assistant is defined in [IDENTITY.md](IDENTITY.md): 
 
 ## What the project already does
 
+![ui](ui.png)
+
+
 - Runs as an Electron desktop app with a React frontend.
 - Sends the chat conversation to a model exposed through an OpenAI-compatible endpoint.
 - Streams the answer into the UI while the model is generating it.
