@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const { loadIdentity } = require('./identity');
 const { runInferenceSession } = require('./openai');
 const { startTaskRunner } = require('./task-runner');
-const { logInferenceError, logUserMessage } = require('./logger');
+const { logInferenceError } = require('./logger');
 
 app.commandLine.appendSwitch('no-sandbox');
 
@@ -55,16 +55,6 @@ app.whenReady().then(() => {
 
     if (typeof requestId !== 'string' || !requestId.trim()) {
       throw new Error('requestId is required');
-    }
-
-    const latestUserMessage = [...conversation]
-      .reverse()
-      .find((entry) => entry?.role === 'user' && typeof entry.content === 'string');
-
-    if (latestUserMessage?.content?.trim()) {
-      logUserMessage(latestUserMessage.content.trim(), {
-        conversationLength: conversation.length,
-      });
     }
 
     try {

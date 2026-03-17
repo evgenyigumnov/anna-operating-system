@@ -7,6 +7,7 @@ const {
   logSystemPrompt,
   logToolCall,
   logToolResult,
+  logUserMessage,
 } = require('./logger');
 
 // const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
@@ -150,6 +151,16 @@ async function runInferenceSession(conversation, options = {}) {
 
   if (messages.length === 1) {
     throw new Error('Conversation is empty');
+  }
+
+  const latestUserMessage = [...messages]
+    .reverse()
+    .find((entry) => entry.role === 'user' && typeof entry.content === 'string');
+
+  if (latestUserMessage?.content) {
+    logUserMessage(latestUserMessage.content, {
+      messageCount: messages.length,
+    });
   }
 
   while (true) {
