@@ -1,7 +1,7 @@
 # Developer's TODO
 
 ## Tools
-
+- [ ] Notify user by message
 - [ ] Weather tool
 - [ ] Brave Search tool
 - [ ] Google Calendar tool
