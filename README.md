@@ -75,14 +75,7 @@ These are examples of messages the current assistant should be able to handle be
 
 ## Planned features
 
-`TODO.md` shows features that are planned but not implemented yet:
-
-- Weather tool
-- Brave Search tool
-- Google Calendar tool
-- Mail tool via IMAP
-- News tool
-- RAG search for local documents
+[TODO.md](TODO.md) shows features that are planned but not implemented yet.
 
 ## How to run Anna Operating System in development mode
 
