@@ -7,7 +7,9 @@
     "dev": "node ./node_modules/vite/bin/vite.js",
     "build": "node ./node_modules/vite/bin/vite.js build",
     "start": "npm run build && node ./node_modules/electron/cli.js --no-sandbox .",
-    "build:exe": "npm run build && node ./node_modules/electron-builder/out/cli/cli.js --win portable"
+    "build:exe": "npm run build && node ./node_modules/electron-builder/out/cli/cli.js --win portable",
+    "build:linux": "npm run build && node ./node_modules/electron-builder/out/cli/cli.js --linux",
+    "build:mac": "npm run build && node ./node_modules/electron-builder/out/cli/cli.js --mac"
   },
   "dependencies": {
     "electron-log": "^5.4.3",

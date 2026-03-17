@@ -93,3 +93,15 @@ These are examples of messages the current assistant should be able to handle be
 8. Create a `.env` file and add `OPENAPI_BASE_URL=http://192.168.10.12:11434/v1`, replacing the IP with your host.
 9. Run `npm install --no-bin-links`.
 10. Run `npm start`.
+
+
+## Build instructions
+```bash
+npm run build:exe
+npm run build:linux
+npm run build:mac
+```
+## Install instructions for linux
+```bash
+sudo snap install anna-operating-system_0.0.1_amd64.snap --dangerous
+```
