@@ -9,6 +9,7 @@ const DEFAULT_IDENTITY = {
   name: 'Anna',
   sex: 'Female',
   style: 'Simple, concise, and with a sense of humor',
+  rules: '',
 };
 
 const HEADING_TO_FIELD = new Map([
@@ -16,6 +17,7 @@ const HEADING_TO_FIELD = new Map([
   ['sex', 'sex'],
   ['gender', 'sex'],
   ['style', 'style'],
+  ['rules', 'rules'],
 ]);
 
 function parseIdentityMarkdown(markdown) {
@@ -37,13 +39,21 @@ function buildIdentityPrompt(identity) {
     ...DEFAULT_IDENTITY,
     ...(identity && typeof identity === 'object' ? identity : {}),
   };
+  const normalizedRules = normalizeValue(normalizedIdentity.rules, '');
 
-  return [
+  const promptLines = [
     'Identity profile:',
     `Name: ${normalizeValue(normalizedIdentity.name, DEFAULT_IDENTITY.name)}`,
     `Sex: ${normalizeValue(normalizedIdentity.sex, DEFAULT_IDENTITY.sex)}`,
     `Style: ${normalizeValue(normalizedIdentity.style, DEFAULT_IDENTITY.style)}`,
-  ].join('\n');
+  ];
+
+  if (normalizedRules) {
+    promptLines.push('Rules:');
+    promptLines.push(normalizedRules);
+  }
+
+  return promptLines.join('\n');
 }
 
 module.exports = {
