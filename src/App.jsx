@@ -183,19 +183,22 @@ function App() {
   }, [assistantName]);
 
   useEffect(() => {
-    const unsubscribe = window.appControls.onTaskResult((taskResult) => {
-      const output = taskResult?.output?.trim();
-      const fileName = taskResult?.fileName?.trim();
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
-      if (!output) {
+  useEffect(() => {
+    const unsubscribe = window.appControls.onConversationMessage((entry) => {
+      const content = entry?.content?.trim();
+
+      if (!content) {
         return;
       }
 
       const nextEntry = {
-        role: 'assistant',
-        content: fileName
-          ? `Task result from \`${fileName}\`\n\n${output}`
-          : output,
+        role: entry?.role === 'user' ? 'user' : 'assistant',
+        content,
       };
 
       setConversation((currentConversation) => {
