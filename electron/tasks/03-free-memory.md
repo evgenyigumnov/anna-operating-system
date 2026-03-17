@@ -8,3 +8,4 @@ ASAP
 2. Run: ps axu
 3. Give advice which apps need to be stopped for less memory use
 
+Give short information in 3 sentences.
