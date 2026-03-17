@@ -66,7 +66,7 @@ module.exports = {
         role: 'user',
         content: [
           'Complete the task using the available tools.',
-          `Task: ${task.trim()}`,
+          task.trim(),
           normalizedHistory.length
               ? `What has already been done:\n${normalizedHistory.map((step, index) => `${index + 1}. ${step}`).join('\n')}`
               : 'What has already been done: no steps yet.',
@@ -78,6 +78,7 @@ module.exports = {
 
     const session = await context.runInferenceSession(conversation, {
       excludedToolNames: [TOOL_NAME],
+      userMessageForLogging: 'Complete the task using the available tools.',
     });
 
     return {
