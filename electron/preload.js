@@ -3,6 +3,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
   getIdentity: () => ipcRenderer.invoke('app:get-identity'),
+  getSetupState: () => ipcRenderer.invoke('app:get-setup-state'),
+  saveIdentityMarkdown: (markdown) =>
+    ipcRenderer.invoke('app:save-identity-markdown', markdown),
+  saveOpenApiBaseUrl: (baseUrl) =>
+    ipcRenderer.invoke('app:save-openapi-base-url', baseUrl),
+  completeSetup: () => ipcRenderer.invoke('app:complete-setup'),
   onTaskResult: (handler) => {
     if (typeof handler !== 'function') {
       return () => {};

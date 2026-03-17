@@ -2,6 +2,12 @@ const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { loadIdentity } = require('./identity');
 const { runInferenceSession } = require('./openai');
+const {
+  completeSetup,
+  getSetupState,
+  saveIdentityMarkdown,
+  setOpenApiBaseUrl,
+} = require('./setup');
 const { startTaskRunner } = require('./task-runner');
 const { logInferenceError } = require('./logger');
 
@@ -44,6 +50,14 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('app:get-identity', () => loadIdentity());
+  ipcMain.handle('app:get-setup-state', () => getSetupState());
+  ipcMain.handle('app:save-identity-markdown', (_event, markdown) =>
+    saveIdentityMarkdown(markdown),
+  );
+  ipcMain.handle('app:save-openapi-base-url', (_event, baseUrl) =>
+    setOpenApiBaseUrl(baseUrl),
+  );
+  ipcMain.handle('app:complete-setup', () => completeSetup());
 
   ipcMain.handle('app:infer', async (event, payload) => {
     const conversation = payload?.conversation;

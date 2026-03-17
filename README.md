@@ -16,6 +16,7 @@ The current identity of the assistant is defined in [IDENTITY.md](IDENTITY.md): 
 - Supports tool calling from the model.
 - Runs background tasks described as Markdown files in `electron/tasks`.
 - Pushes task results into the main conversation automatically.
+- First time launch application step by step wizard for user configuration.
 
 ## Available tools
 

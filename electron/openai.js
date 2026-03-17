@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { buildIdentityPrompt, loadIdentity } = require('./identity');
+const { getOpenApiBaseUrl } = require('./setup');
 const {
   logAssistantMessage,
   logInferenceError,
@@ -10,14 +11,6 @@ const {
   logUserMessage,
 } = require('./logger');
 
-const ENV_FILE_PATH = path.resolve(__dirname, '..', '.env');
-
-if (typeof process.loadEnvFile === 'function' && fs.existsSync(ENV_FILE_PATH)) {
-  process.loadEnvFile(ENV_FILE_PATH);
-}
-
-const OPENAPI_BASE_URL =
-  process.env.OPENAPI_BASE_URL || 'http://127.0.0.1:11434/v1';
 const OPENAPI_MODEL = 'gpt-oss:120b-cloud';
 
 const DEFAULT_SYSTEM_PROMPT =
@@ -44,7 +37,7 @@ async function createOpenAIClient() {
 
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || 'llm-studio',
-    baseURL: OPENAPI_BASE_URL,
+    baseURL: getOpenApiBaseUrl(),
   });
 }
 

@@ -13,6 +13,10 @@ body {
   margin: 0;
 }
 
+#root {
+  min-height: 100vh;
+}
+
 button {
   border: 0;
   border-radius: 12px;
@@ -56,6 +60,11 @@ button:hover {
   border-radius: 28px;
   background: rgba(17, 24, 39, 0.86);
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45);
+}
+
+.card--compact {
+  margin-top: 18vh;
+  text-align: center;
 }
 
 .card h1 {
@@ -199,4 +208,65 @@ button:hover {
 
 .secondary-button:hover {
   box-shadow: 0 10px 24px rgba(71, 85, 105, 0.24);
+}
+
+.wizard-card {
+  gap: 28px;
+}
+
+.wizard-header {
+  display: grid;
+  gap: 10px;
+}
+
+.wizard-eyebrow,
+.wizard-progress,
+.wizard-step-label {
+  margin: 0;
+  color: rgba(245, 239, 228, 0.72);
+}
+
+.wizard-step {
+  display: grid;
+  gap: 24px;
+}
+
+.wizard-step-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.wizard-step-copy h2,
+.wizard-step-copy p {
+  margin: 0;
+}
+
+.wizard-field {
+  display: grid;
+  gap: 12px;
+  font-weight: 700;
+}
+
+.wizard-input,
+.wizard-textarea {
+  width: 100%;
+  padding: 18px 20px;
+  font: inherit;
+  color: inherit;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.wizard-textarea {
+  resize: vertical;
+  min-height: 320px;
+}
+
+.wizard-error {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.45);
 }
