@@ -1,4 +1,6 @@
+const fs = require('fs');
 const path = require('path');
+const { getBundledPath, getDataPath } = require('./runtime-paths');
 const {
   loadMarkdownConfig,
   normalizeValue,
@@ -33,8 +35,22 @@ function parseIdentityMarkdown(markdown) {
   });
 }
 
-function loadIdentity(identityPath = path.join(__dirname, '..', 'IDENTITY.md')) {
-  return loadMarkdownConfig(identityPath, {
+function resolveIdentityPath(identityPath) {
+  if (typeof identityPath === 'string' && identityPath.trim()) {
+    return path.resolve(identityPath);
+  }
+
+  const runtimeIdentityPath = getDataPath('IDENTITY.md');
+
+  if (fs.existsSync(runtimeIdentityPath)) {
+    return runtimeIdentityPath;
+  }
+
+  return getBundledPath('IDENTITY.md');
+}
+
+function loadIdentity(identityPath) {
+  return loadMarkdownConfig(resolveIdentityPath(identityPath), {
     defaults: DEFAULT_IDENTITY,
     headingToField: HEADING_TO_FIELD,
   });

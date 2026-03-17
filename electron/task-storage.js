@@ -1,8 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const { loadMarkdownConfig } = require('./markdown-config');
+const { getDataPath, isPackagedRuntime } = require('./runtime-paths');
 
-const TASKS_DIRECTORY = path.join(__dirname, 'tasks');
+const TASKS_DIRECTORY = isPackagedRuntime()
+  ? getDataPath('tasks')
+  : path.join(__dirname, 'tasks');
 const STATE_FILE_PATH = path.join(TASKS_DIRECTORY, '.task-runner-state.json');
 const MAX_HISTORY_ITEMS = 20;
 

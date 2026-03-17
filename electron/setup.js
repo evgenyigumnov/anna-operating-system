@@ -1,11 +1,20 @@
 const fs = require('fs');
 const path = require('path');
+const { getBundledPath, getDataPath, isPackagedRuntime } = require('./runtime-paths');
 
-const PROJECT_ROOT = path.resolve(__dirname, '..');
-const IDENTITY_FILE_PATH = path.join(PROJECT_ROOT, 'IDENTITY.md');
-const ENV_FILE_PATH = path.join(PROJECT_ROOT, '.env');
-const SETUP_LOCK_FILE_PATH = path.join(PROJECT_ROOT, 'already_setup.lock');
+const IDENTITY_FILE_PATH = getDataPath('IDENTITY.md');
+const ENV_FILE_PATH = getDataPath('.env');
+const SETUP_LOCK_FILE_PATH = getDataPath('already_setup.lock');
+const BUNDLED_IDENTITY_FILE_PATH = getBundledPath('IDENTITY.md');
 const DEFAULT_OPENAPI_BASE_URL = 'http://127.0.0.1:11434/v1';
+
+function ensureParentDirectory(filePath) {
+  const parentDirectory = path.dirname(filePath);
+
+  if (!fs.existsSync(parentDirectory)) {
+    fs.mkdirSync(parentDirectory, { recursive: true });
+  }
+}
 
 function readTextFile(filePath, fallback = '') {
   try {
@@ -16,7 +25,33 @@ function readTextFile(filePath, fallback = '') {
 }
 
 function writeTextFile(filePath, content) {
+  ensureParentDirectory(filePath);
   fs.writeFileSync(filePath, String(content), 'utf8');
+}
+
+function ensureIdentityFile() {
+  if (fs.existsSync(IDENTITY_FILE_PATH)) {
+    return;
+  }
+
+  const bundledIdentity = readTextFile(BUNDLED_IDENTITY_FILE_PATH, '');
+
+  if (bundledIdentity.trim()) {
+    writeTextFile(IDENTITY_FILE_PATH, `${bundledIdentity.trimEnd()}\n`);
+  }
+}
+
+function ensureRuntimeFiles() {
+  if (isPackagedRuntime()) {
+    ensureIdentityFile();
+  }
+}
+
+function getIdentityMarkdown() {
+  ensureRuntimeFiles();
+
+  const bundledIdentity = readTextFile(BUNDLED_IDENTITY_FILE_PATH, '');
+  return readTextFile(IDENTITY_FILE_PATH, bundledIdentity);
 }
 
 function parseEnvFile(content) {
@@ -120,7 +155,7 @@ function setOpenApiBaseUrl(baseUrl) {
 function getSetupState() {
   return {
     isFirstLaunch: !fs.existsSync(SETUP_LOCK_FILE_PATH),
-    identityMarkdown: readTextFile(IDENTITY_FILE_PATH, ''),
+    identityMarkdown: getIdentityMarkdown(),
     openApiBaseUrl: getOpenApiBaseUrl(),
   };
 }

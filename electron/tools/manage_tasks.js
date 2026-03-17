@@ -69,7 +69,7 @@ module.exports = {
     function: {
       name: 'manage_tasks',
       description:
-        'Creates, deletes, or lists task files stored in electron/tasks. Use English task instructions when possible.',
+        'Creates, deletes, or lists task files stored in the app task directory. Use English task instructions when possible.',
       parameters: {
         type: 'object',
         properties: {
