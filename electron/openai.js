@@ -10,12 +10,8 @@ const {
   logUserMessage,
 } = require('./logger');
 
-// const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:1234/v1';
-const LLM_STUDIO_BASE_URL = 'http://192.168.10.12:11434/v1';
-// const LLM_STUDIO_MODEL = 'qwen3.5-27b';
-// const LLM_STUDIO_MODEL = 'unsloth/qwen3.5-9b';
-// const LLM_STUDIO_MODEL = 'qwen3.5:397b-cloud';
-const LLM_STUDIO_MODEL = 'gpt-oss:120b-cloud';
+const OPENAPI_BASE_URL = 'http://192.168.10.12:11434/v1';
+const OPENAPI_MODEL = 'gpt-oss:120b-cloud';
 
 const DEFAULT_SYSTEM_PROMPT =
   'Format every final answer as Markdown. Use tools when they are relevant.';
@@ -41,7 +37,7 @@ async function createOpenAIClient() {
 
   return new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || 'llm-studio',
-    baseURL: LLM_STUDIO_BASE_URL,
+    baseURL: OPENAPI_BASE_URL,
   });
 }
 
@@ -171,7 +167,7 @@ async function runInferenceSession(conversation, options = {}) {
         messageCount: messages.length,
       });
       stream = await client.chat.completions.create({
-        model: LLM_STUDIO_MODEL,
+        model: OPENAPI_MODEL,
         messages,
         tool_choice: 'auto',
         tools,
