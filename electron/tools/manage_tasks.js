@@ -97,7 +97,7 @@ module.exports = {
           recent_runs_for_analysis: {
             type: 'integer',
             description:
-              'Optional number of latest runs to expose to the task as prior messages for silence or deduplication decisions.',
+              'Optional number of latest runs to expose to the task as prior messages for silence or deduplication decisions. If a task is frequently launched, it makes sense to specify the number of stored launch histories so that the user does not receive a notification more than once a day. Calculate how many times the task will be launched per day and use this number as the value.',
           },
         },
         required: ['action'],
