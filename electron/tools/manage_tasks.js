@@ -92,7 +92,7 @@ module.exports = {
           },
           instructions: {
             type: 'string',
-            description: 'Task instructions written into the markdown file. Instructions will be parsed by LLM. Instructions should be concise and clear and in human-readable format. Instruction is not shell commands script.',
+            description: 'Task instructions written into the markdown file. Instructions will be parsed by LLM. Instructions should be concise and clear and in human-readable format. Instruction is not shell commands script. If the task runs periodically, add at the end of the instructions that if the task has produced the same result in the previous runs, remain silent. This will avoid sending a message to the user every hour.',
           },
           recent_runs_for_analysis: {
             type: 'integer',

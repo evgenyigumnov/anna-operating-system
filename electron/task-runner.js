@@ -382,6 +382,17 @@ async function registerTask(taskFilePath, options = runnerOptions) {
   const taskConfig = parseTaskFile(taskFilePath);
   const scheduleConfig = parseSchedule(taskConfig.schedule);
 
+  if (scheduleConfig.kind === 'interval') {
+    scheduleNextRun(taskConfig, scheduleConfig, options);
+    logTaskEvent('task_interval_run_scheduled', {
+      taskId: taskConfig.id,
+      fileName: taskConfig.fileName,
+      schedule: taskConfig.schedule,
+      runAt: new Date(Date.now() + scheduleConfig.intervalMs).toISOString(),
+    });
+    return taskConfig;
+  }
+
   if (scheduleConfig.kind !== 'delayed_once') {
     await runTask(taskConfig, options);
     return taskConfig;
