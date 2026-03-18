@@ -18,4 +18,4 @@
    -  [ ]  Mail settings
    -  [ ]  News settings
    -  [ ]  RAG settings (point important folders with documents)
-- [ ] Telegram integration
+- [x] Telegram integration

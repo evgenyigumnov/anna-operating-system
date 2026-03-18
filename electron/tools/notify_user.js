@@ -1,4 +1,4 @@
-const { broadcastConversationMessage } = require('../conversation');
+const { deliverConversationEntry } = require('../message-delivery');
 
 module.exports = {
   definition: {
@@ -25,14 +25,14 @@ module.exports = {
       throw new Error('The "message" argument must be a non-empty string.');
     }
 
-    const delivery = broadcastConversationMessage({
+    const delivery = await deliverConversationEntry({
       role: 'assistant',
       content: message,
     });
 
     return {
       ok: true,
-      ...delivery,
+      message: delivery,
     };
   },
 };

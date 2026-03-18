@@ -18,10 +18,16 @@ const {
 } = require('./conversation-store');
 const { broadcastConversationMessage } = require('./conversation');
 const { createTelegramBridge } = require('./telegram');
+const {
+  deliverConversationEntry,
+  mirrorConversationEntryToTelegram,
+  setTelegramBridge,
+} = require('./message-delivery');
 
 app.commandLine.appendSwitch('no-sandbox');
 
 const telegramBridge = createTelegramBridge(getEnvValue('TELEGRAM_TOKEN'));
+setTelegramBridge(telegramBridge);
 let stopTelegramBridge = () => {};
 let telegramConversationQueue = Promise.resolve();
 
@@ -89,6 +95,14 @@ app.whenReady().then(() => {
 
     try {
       writeConversationHistory(conversation);
+
+      const latestUserMessage = [...conversation]
+        .reverse()
+        .find((entry) => entry?.role === 'user' && typeof entry?.content === 'string');
+
+      if (latestUserMessage) {
+        await mirrorConversationEntryToTelegram(latestUserMessage);
+      }
 
       const session = await runInferenceSession(conversation, {
         onTextDelta(delta) {
@@ -172,18 +186,14 @@ app.whenReady().then(() => {
 
       const output = taskResult?.output?.trim();
 
-      if (!output) {
+      if (!output || output === 'KEEP_SILENCE') {
         return;
       }
 
-      appendConversationEntry({
+      void deliverConversationEntry({
         role: 'assistant',
         content: output,
       });
-
-      if (telegramBridge.isEnabled) {
-        void telegramBridge.sendMessageToKnownChats(output);
-      }
     },
   }).catch((error) => {
     logInferenceError(error, {
