@@ -1,10 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
 const { createImapClient, getMessageByUidFromClient } = require('../email');
 const { logInferenceError, logTaskEvent } = require('../logger');
 const { hasImapConfig } = require('../setup');
-const { TASKS_DIRECTORY, createTaskMarkdown, ensureTasksDirectory } = require('../task-storage');
+const { registerTask } = require('../task-runner');
+const { createTaskFile } = require('../task-storage');
 
 const HOOK_NAME = 'email';
 const MAILBOX_PATH = 'INBOX';
@@ -24,17 +22,6 @@ function truncateText(value, maxLength) {
   }
 
   return `${normalized.slice(0, maxLength)}...[truncated]`;
-}
-
-function slugifyEmailTask(uid, subject) {
-  const normalizedSubject = String(subject || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 32);
-
-  const suffix = normalizedSubject || 'message';
-  return `hook-email-${uid}-${suffix}`;
 }
 
 function formatAddressList(addresses) {
@@ -84,44 +71,12 @@ function buildTaskInstructions(message) {
   ].join('\n');
 }
 
-function createEmailTaskFile(message) {
-  ensureTasksDirectory();
-
-  const fileName = `${slugifyEmailTask(message.uid, message.subject)}-${Date.now()}.md`;
-  const filePath = path.join(TASKS_DIRECTORY, fileName);
-  const markdown = createTaskMarkdown({
+function createEmailTask(message) {
+  return createTaskFile({
+    title: `hook email ${message.uid} ${message.subject || 'message'}`,
     schedule: 'ASAP',
     instructions: buildTaskInstructions(message),
-    history: 'No',
-  });
-
-  fs.writeFileSync(filePath, markdown, 'utf8');
-
-  return filePath;
-}
-
-function spawnTaskRunner(taskFilePath) {
-  const taskRunnerPath = path.join(__dirname, '..', 'task-runner.js');
-  const child = spawn(
-    process.execPath,
-    ['--no-sandbox', taskRunnerPath, '--task-file', taskFilePath],
-    {
-      stdio: 'ignore',
-    },
-  );
-
-  child.on('error', (error) => {
-    logInferenceError(error, {
-      stage: 'email_hook_spawn_task_runner',
-      taskFilePath,
-    });
-  });
-
-  child.on('exit', (code) => {
-    logTaskEvent('email_hook_task_runner_exited', {
-      taskFilePath,
-      exitCode: code,
-    });
+    recentRunsForAnalysis: null,
   });
 }
 
@@ -182,15 +137,15 @@ module.exports = {
             folder: MAILBOX_PATH,
             messageUid: uid,
           });
-          const taskFilePath = createEmailTaskFile(message);
+          const taskConfig = createEmailTask(message);
 
           logTaskEvent('email_hook_task_created', {
             uid: message.uid,
             subject: message.subject,
-            taskFilePath,
+            taskFilePath: taskConfig.filePath,
           });
 
-          spawnTaskRunner(taskFilePath);
+          await registerTask(taskConfig.filePath);
         })
         .catch((error) => {
           logInferenceError(error, {
