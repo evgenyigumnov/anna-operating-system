@@ -27,6 +27,7 @@ The current implementation in `electron/tools` supports these actions:
 - `get_url_dump`: open an HTTP or HTTPS page in hidden Electron browser context and extract readable text with numbered references.
 - `run_shell_command`: execute a shell command on the local machine and return stdout, stderr, and exit details.
 - `manage_tasks`: list, create, and delete background tasks stored as Markdown files.
+- `manage_email`: list folders, list message summaries, read a full message, delete a message, and send a message through Gmail IMAP/SMTP.
 - `task_from_steps`: internal helper for multi-step task execution.
 
 ## Background task system
@@ -77,6 +78,13 @@ These are examples of messages the current assistant should be able to handle be
 - `Create a task to check disk space once a day and stay silent if nothing changed.`
 - `Remind me after 1 minute to call my mom.`
 - `Delete the task 04-reminder.`
+- `List my email folders.`
+- `Show unread emails from INBOX.`
+- `Show the latest 10 emails from INBOX.`
+- `Find emails in INBOX with query "from:alice newer_than:7d".`
+- `Open the full email with UID 123 from INBOX.`
+- `Delete the email with UID 123 from INBOX.`
+- `Send an email to bob@example.com with cc to team@example.com.`
 
 ## Planned features
 
@@ -91,10 +99,26 @@ These are examples of messages the current assistant should be able to handle be
 5. Optional: run `ollama pull embeddinggemma` for future RAG embeddings support.
 6. Run `git clone git@github.com:evgenyigumnov/anna-operating-system.git`.
 7. Run `cd anna-operating-system`.
-8. Create a `.env` file and add `OPENAPI_BASE_URL=http://192.168.10.12:11434/v1`, replacing the IP with your host.
-9. Optional: add `TELEGRAM_TOKEN=...` to enable Telegram integration for a bot created with BotFather.
-10. Run `npm install --no-bin-links`.
-11. Run `npm start`.
+8. Create a `.env` file from `.env.example`.
+9. Set `OPENAPI_BASE_URL=http://192.168.10.12:11434/v1`, replacing the IP with your host.
+10. Optional: add `TELEGRAM_TOKEN=...` to enable Telegram integration for a bot created with BotFather.
+11. Optional: configure Gmail email access with these `.env` variables:
+
+```bash
+EMAIL_IMAP_HOST=imap.gmail.com
+EMAIL_IMAP_PORT=993
+EMAIL_IMAP_SECURE=true
+EMAIL_IMAP_USER=user@gmail.com
+EMAIL_IMAP_PASSWORD=your_app_password
+
+EMAIL_SMTP_HOST=smtp.gmail.com
+EMAIL_SMTP_PORT=465
+EMAIL_SMTP_SECURE=true
+EMAIL_SMTP_USER=user@gmail.com
+EMAIL_SMTP_PASSWORD=your_app_password
+```
+12. Run `npm install --no-bin-links`.
+13. Run `npm start`.
 
 
 ## Build instructions
