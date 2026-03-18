@@ -164,8 +164,6 @@ function buildStepHistory(taskConfig, taskState) {
 
 function buildTaskPrompt(taskConfig) {
   const promptParts = [
-    `Task file: ${taskConfig.fileName}`,
-    `Schedule: ${taskConfig.schedule}`,
     'Instructions:',
     taskConfig.instructions,
   ];
@@ -216,19 +214,6 @@ function scheduleNextRun(taskConfig, scheduleConfig, options = {}) {
 function normalizeTaskOutput(rawResult) {
   const text = extractTextContent(rawResult);
   return trimText(text);
-}
-
-function publishTaskResult(taskConfig, output, options = {}) {
-  if (!output || output.includes(SILENCE_TOKEN)) {
-    return;
-  }
-
-  options.onTaskResult?.({
-    taskId: taskConfig.id,
-    fileName: taskConfig.fileName,
-    output,
-    createdAt: new Date().toISOString(),
-  });
 }
 
 async function executeTask(taskConfig, taskState) {
@@ -341,8 +326,6 @@ async function runTask(taskConfig, options = {}) {
       fileName: taskConfig.fileName,
       output,
     });
-    publishTaskResult(taskConfig, output, options);
-
     if (scheduleConfig.kind === 'once' || scheduleConfig.kind === 'delayed_once') {
       fs.unlinkSync(taskConfig.filePath);
       deleteTaskState(taskConfig.id);
