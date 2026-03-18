@@ -4,14 +4,26 @@ const { loadIdentity } = require('./identity');
 const { runInferenceSession } = require('./openai');
 const {
   completeSetup,
+  getEnvValue,
   getSetupState,
   saveIdentityMarkdown,
   setOpenApiBaseUrl,
 } = require('./setup');
 const { startTaskRunner } = require('./task-runner');
 const { logInferenceError } = require('./logger');
+const {
+  appendConversationEntry,
+  readConversationHistory,
+  writeConversationHistory,
+} = require('./conversation-store');
+const { broadcastConversationMessage } = require('./conversation');
+const { createTelegramBridge } = require('./telegram');
 
 app.commandLine.appendSwitch('no-sandbox');
+
+const telegramBridge = createTelegramBridge(getEnvValue('TELEGRAM_TOKEN'));
+let stopTelegramBridge = () => {};
+let telegramConversationQueue = Promise.resolve();
 
 function sendInferenceEvent(webContents, channel, payload) {
   if (!webContents.isDestroyed()) {
@@ -51,6 +63,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('app:get-identity', () => loadIdentity());
   ipcMain.handle('app:get-setup-state', () => getSetupState());
+  ipcMain.handle('app:get-conversation-history', () => readConversationHistory());
+  ipcMain.handle('app:sync-conversation-history', (_event, conversation) =>
+    writeConversationHistory(conversation),
+  );
   ipcMain.handle('app:save-identity-markdown', (_event, markdown) =>
     saveIdentityMarkdown(markdown),
   );
@@ -72,6 +88,8 @@ app.whenReady().then(() => {
     }
 
     try {
+      writeConversationHistory(conversation);
+
       const session = await runInferenceSession(conversation, {
         onTextDelta(delta) {
           sendInferenceEvent(event.sender, 'app:infer:chunk', {
@@ -85,6 +103,15 @@ app.whenReady().then(() => {
         requestId,
         output: session.output,
       });
+
+      appendConversationEntry({
+        role: 'assistant',
+        content: session.output,
+      });
+
+      if (telegramBridge.isEnabled) {
+        await telegramBridge.sendMessageToKnownChats(session.output);
+      }
 
       return session.output;
     } catch (error) {
@@ -101,10 +128,62 @@ app.whenReady().then(() => {
     }
   });
 
+  if (telegramBridge.isEnabled) {
+    stopTelegramBridge = telegramBridge.start((telegramMessage) => {
+      telegramConversationQueue = telegramConversationQueue
+        .then(async () => {
+          const userMessage = {
+            role: 'user',
+            content: telegramMessage.text,
+            createdAt: telegramMessage.createdAt,
+          };
+
+          appendConversationEntry(userMessage);
+          broadcastConversationMessage(userMessage);
+
+          const conversation = readConversationHistory();
+          const session = await runInferenceSession(conversation);
+          const assistantMessage = {
+            role: 'assistant',
+            content: session.output,
+          };
+
+          appendConversationEntry(assistantMessage);
+          broadcastConversationMessage(assistantMessage);
+          await telegramBridge.sendMessageToChat(
+            telegramMessage.chatId,
+            session.output,
+          );
+        })
+        .catch((error) => {
+          logInferenceError(error, {
+            stage: 'telegram_message_processing',
+          });
+        });
+
+      return telegramConversationQueue;
+    });
+  }
+
   createWindow();
   startTaskRunner({
     onTaskResult(taskResult) {
       broadcastRendererEvent('app:task-result', taskResult);
+
+      const output = taskResult?.output?.trim();
+
+      if (!output) {
+        return;
+      }
+
+      appendConversationEntry({
+        role: 'assistant',
+        content: output,
+      });
+
+      if (telegramBridge.isEnabled) {
+        void telegramBridge.sendMessageToKnownChats(output);
+      }
     },
   }).catch((error) => {
     logInferenceError(error, {
@@ -117,6 +196,10 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+app.on('before-quit', () => {
+  stopTelegramBridge();
 });
 
 app.on('window-all-closed', () => {

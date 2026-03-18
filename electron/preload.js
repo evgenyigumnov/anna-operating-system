@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
   getIdentity: () => ipcRenderer.invoke('app:get-identity'),
   getSetupState: () => ipcRenderer.invoke('app:get-setup-state'),
+  getConversationHistory: () => ipcRenderer.invoke('app:get-conversation-history'),
+  syncConversationHistory: (conversation) =>
+    ipcRenderer.invoke('app:sync-conversation-history', conversation),
   saveIdentityMarkdown: (markdown) =>
     ipcRenderer.invoke('app:save-identity-markdown', markdown),
   saveOpenApiBaseUrl: (baseUrl) =>

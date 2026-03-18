@@ -86,18 +86,28 @@ function stringifyEnvFile(entries) {
     .replace(/\n*$/, '\n');
 }
 
-function getOpenApiBaseUrl() {
+function getEnvValue(key) {
+  const normalizedKey = String(key || '').trim();
+
+  if (!normalizedKey) {
+    return '';
+  }
+
   const envContent = readTextFile(ENV_FILE_PATH, '');
   const envEntries = parseEnvFile(envContent);
   const entry = envEntries.find(
     (currentEntry) =>
       currentEntry.type === 'entry' &&
-      currentEntry.key === 'OPENAPI_BASE_URL' &&
+      currentEntry.key === normalizedKey &&
       typeof currentEntry.value === 'string' &&
       currentEntry.value.trim(),
   );
 
-  return entry?.value?.trim() || DEFAULT_OPENAPI_BASE_URL;
+  return entry?.value?.trim() || '';
+}
+
+function getOpenApiBaseUrl() {
+  return getEnvValue('OPENAPI_BASE_URL') || DEFAULT_OPENAPI_BASE_URL;
 }
 
 function setOpenApiBaseUrl(baseUrl) {
@@ -185,6 +195,7 @@ function completeSetup() {
 module.exports = {
   DEFAULT_OPENAPI_BASE_URL,
   completeSetup,
+  getEnvValue,
   getOpenApiBaseUrl,
   getSetupState,
   saveIdentityMarkdown,

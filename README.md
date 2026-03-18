@@ -2,7 +2,8 @@
 
 Anna Operating System is a local desktop assistant built with Electron and React. It provides a chat window connected to an LLM through an OpenAI-compatible API and can use local tools to perform practical actions on the computer.
 
-The current identity of the assistant is defined in [IDENTITY.md](IDENTITY.md): the assistant is named Anna, speaks English, and answers in a simple, concise style with a sense of humor. The application stores chat history in the browser local storage and renders assistant responses as Markdown.
+The current identity of the assistant is defined in [IDENTITY.md](IDENTITY.md): the assistant is named Anna, speaks English, and answers in a simple, concise style with a sense of humor. The application persists chat history locally and renders assistant responses as Markdown.
+If `TELEGRAM_TOKEN` is defined in `.env`, the app also starts a Telegram bot bridge: incoming Telegram text messages are added to the main conversation and assistant replies are mirrored back to Telegram.
 
 ## What the project already does
 
@@ -91,8 +92,9 @@ These are examples of messages the current assistant should be able to handle be
 6. Run `git clone git@github.com:evgenyigumnov/anna-operating-system.git`.
 7. Run `cd anna-operating-system`.
 8. Create a `.env` file and add `OPENAPI_BASE_URL=http://192.168.10.12:11434/v1`, replacing the IP with your host.
-9. Run `npm install --no-bin-links`.
-10. Run `npm start`.
+9. Optional: add `TELEGRAM_TOKEN=...` to enable Telegram integration for a bot created with BotFather.
+10. Run `npm install --no-bin-links`.
+11. Run `npm start`.
 
 
 ## Build instructions

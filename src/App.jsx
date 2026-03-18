@@ -146,19 +146,34 @@ function App() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([window.appControls.getIdentity(), window.appControls.getSetupState(), loadWizardSteps()])
-      .then(([identity, setupState, steps]) => {
+    Promise.all([
+      window.appControls.getIdentity(),
+      window.appControls.getSetupState(),
+      window.appControls.getConversationHistory(),
+      loadWizardSteps(),
+    ])
+      .then(([identity, setupState, storedConversation, steps]) => {
         if (!isMounted) {
           return;
         }
 
         const nextAssistantName = identity?.name?.trim() || DEFAULT_ASSISTANT_NAME;
+        const normalizedStoredConversation = Array.isArray(storedConversation)
+          ? storedConversation
+          : [];
+        const localConversation = loadConversation();
+
         setAssistantName(nextAssistantName);
         setIsFirstLaunch(Boolean(setupState?.isFirstLaunch));
         setFormData({
           identityMarkdown: setupState?.identityMarkdown || '',
           openApiBaseUrl: setupState?.openApiBaseUrl || '',
         });
+        setConversation(
+          normalizedStoredConversation.length
+            ? normalizedStoredConversation
+            : localConversation,
+        );
         setWizardSteps(steps);
         setIsWizardReady(true);
       })
@@ -177,6 +192,11 @@ function App() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    persistConversation(conversation);
+    window.appControls.syncConversationHistory(conversation).catch(() => {});
+  }, [conversation]);
 
   useEffect(() => {
     document.title = `${assistantName} Operating System`;
@@ -198,9 +218,7 @@ function App() {
       };
 
       setConversation((currentConversation) => {
-        const nextConversation = appendConversationEntry(currentConversation, nextEntry);
-        persistConversation(nextConversation);
-        return nextConversation;
+        return appendConversationEntry(currentConversation, nextEntry);
       });
     });
 
@@ -224,9 +242,7 @@ function App() {
       };
 
       setConversation((currentConversation) => {
-        const nextConversation = appendConversationEntry(currentConversation, nextEntry);
-        persistConversation(nextConversation);
-        return nextConversation;
+        return appendConversationEntry(currentConversation, nextEntry);
       });
     });
 
@@ -260,7 +276,6 @@ function App() {
     ];
 
     setConversation(nextConversation);
-    persistConversation(nextConversation.slice(0, -1));
 
     try {
       const reply = await window.appControls.inferStream(nextConversation.slice(0, -1), {
@@ -289,7 +304,6 @@ function App() {
       });
 
       setConversation(completedConversation);
-      persistConversation(completedConversation);
     } catch (error) {
       const details =
         error instanceof Error ? error.message : 'Cannot receive reply.';
@@ -299,7 +313,6 @@ function App() {
       });
 
       setConversation(failedConversation);
-      persistConversation(failedConversation);
     } finally {
       setIsLoading(false);
     }
@@ -312,7 +325,6 @@ function App() {
 
     setConversation([]);
     setMessage('');
-    persistConversation([]);
   };
 
   const handleMessageKeyDown = (event) => {
