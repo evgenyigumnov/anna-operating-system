@@ -47,7 +47,8 @@ module.exports = {
           },
           message_uid: {
             type: 'integer',
-            description: 'UID of the message inside the selected folder.',
+            description:
+              'UID of the message inside the selected folder, or the 1-based item number from the most recent list_messages result for that folder.',
           },
           to: {
             type: 'array',

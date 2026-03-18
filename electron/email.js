@@ -11,6 +11,7 @@ const DEFAULT_SMTP_PORT = 465;
 const DEFAULT_SMTP_SECURE = true;
 const DEFAULT_LIST_LIMIT = 10;
 const MAX_LIST_LIMIT = 100;
+const recentMessageListsByFolder = new Map();
 
 function readRequiredEnv(key) {
   const value = getEnvValue(key).trim();
@@ -149,6 +150,29 @@ function buildMessageSummary(message) {
       null,
     seen: message?.flags instanceof Set ? message.flags.has('\\Seen') : null,
   };
+}
+
+function rememberRecentMessageList(folder, messages) {
+  recentMessageListsByFolder.set(folder, Array.isArray(messages) ? messages : []);
+}
+
+function resolveUidFromRecentMessageList(folder, candidate) {
+  const messages = recentMessageListsByFolder.get(folder);
+
+  if (!Array.isArray(messages) || !messages.length) {
+    return null;
+  }
+
+  const ordinal = Number(candidate);
+
+  if (!Number.isInteger(ordinal) || ordinal <= 0 || ordinal > messages.length) {
+    return null;
+  }
+
+  const message = messages[ordinal - 1];
+  const resolvedUid = Number(message?.uid);
+
+  return Number.isInteger(resolvedUid) && resolvedUid > 0 ? resolvedUid : null;
 }
 
 function buildImapConfig() {
@@ -311,6 +335,7 @@ async function listFolderMessages({ folder, mode, limit, query }) {
 
       const selectedUids = uids.slice(-normalizedLimit).reverse();
       const messages = await fetchMessageSummaries(client, selectedUids);
+      rememberRecentMessageList(normalizedFolder, messages);
 
       return {
         folder: normalizedFolder,
@@ -330,8 +355,9 @@ async function getMessageByUid({ folder, messageUid }) {
 
   return withImapClient((client) =>
     withMailboxLock(client, normalizedFolder, async () => {
-      const message = await client.fetchOne(
-        String(normalizedUid),
+      let resolvedUid = normalizedUid;
+      let message = await client.fetchOne(
+        String(resolvedUid),
         {
           uid: true,
           flags: true,
@@ -344,6 +370,26 @@ async function getMessageByUid({ folder, messageUid }) {
       );
 
       if (!message?.source) {
+        const fallbackUid = resolveUidFromRecentMessageList(normalizedFolder, normalizedUid);
+
+        if (fallbackUid && fallbackUid !== normalizedUid) {
+          resolvedUid = fallbackUid;
+          message = await client.fetchOne(
+            String(resolvedUid),
+            {
+              uid: true,
+              flags: true,
+              envelope: true,
+              internalDate: true,
+              source: true,
+              bodyStructure: true,
+            },
+            { uid: true },
+          );
+        }
+      }
+
+      if (!message?.source) {
         throw new Error(
           `Message UID ${normalizedUid} was not found in folder "${normalizedFolder}".`,
         );
@@ -353,7 +399,7 @@ async function getMessageByUid({ folder, messageUid }) {
 
       return {
         folder: normalizedFolder,
-        uid: message.uid ?? normalizedUid,
+        uid: message.uid ?? resolvedUid,
         messageId: parsedMessage.messageId || message.envelope?.messageId || null,
         subject: parsedMessage.subject || message.envelope?.subject || '',
         date:
@@ -392,8 +438,9 @@ async function deleteMessageByUid({ folder, messageUid }) {
 
   return withImapClient((client) =>
     withMailboxLock(client, normalizedFolder, async () => {
-      const message = await client.fetchOne(
-        String(normalizedUid),
+      let resolvedUid = normalizedUid;
+      let message = await client.fetchOne(
+        String(resolvedUid),
         {
           uid: true,
           envelope: true,
@@ -404,12 +451,30 @@ async function deleteMessageByUid({ folder, messageUid }) {
       );
 
       if (!message) {
+        const fallbackUid = resolveUidFromRecentMessageList(normalizedFolder, normalizedUid);
+
+        if (fallbackUid && fallbackUid !== normalizedUid) {
+          resolvedUid = fallbackUid;
+          message = await client.fetchOne(
+            String(resolvedUid),
+            {
+              uid: true,
+              envelope: true,
+              flags: true,
+              internalDate: true,
+            },
+            { uid: true },
+          );
+        }
+      }
+
+      if (!message) {
         throw new Error(
           `Message UID ${normalizedUid} was not found in folder "${normalizedFolder}".`,
         );
       }
 
-      await client.messageDelete(String(normalizedUid), { uid: true });
+      await client.messageDelete(String(resolvedUid), { uid: true });
 
       return {
         folder: normalizedFolder,

@@ -5,7 +5,7 @@
 - [ ] Weather tool
 - [ ] Brave Search tool
 - [ ] Google Calendar tool
-- [ ] Mail tool (imap)
+- [x] Mail tool (imap)
 - [ ] News tool
 - [ ] Search via RAG for local documents
 
@@ -21,3 +21,4 @@
 - [x] Telegram integration
   - [ ] `/clear` command
   - [ ] sendMessageDraft for streaming message by chunks
+  - [ ] convert Markdown to telegram markup assistant's messages
