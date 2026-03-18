@@ -148,13 +148,13 @@ function appendMarkdownSections(promptLines, sectionTitle, markdown) {
       continue;
     }
 
-    if (contentLines.length === 1) {
-      promptLines.push(`${section.title}: ${contentLines[0]}`);
-      continue;
-    }
-
-    promptLines.push(`${section.title}:`);
+    promptLines.push(`## ${section.title}`);
     promptLines.push(...contentLines);
+    promptLines.push('');
+  }
+
+  while (promptLines.length && !promptLines.at(-1).trim()) {
+    promptLines.pop();
   }
 }
 
@@ -167,33 +167,43 @@ function buildIdentityPrompt(identity) {
   const normalizedOperatingSystem = normalizeValue(normalizedIdentity.operatingSystem, '');
 
   const promptLines = [
-    'Identity profile:',
-    `Name: ${normalizeValue(normalizedIdentity.name, DEFAULT_IDENTITY.name)}`,
-    `Sex: ${normalizeValue(normalizedIdentity.sex, DEFAULT_IDENTITY.sex)}`,
-    `Language: ${normalizeValue(normalizedIdentity.language, DEFAULT_IDENTITY.language)}`,
-    `Style: ${normalizeValue(normalizedIdentity.style, DEFAULT_IDENTITY.style)}`,
+    '# ASSISTANCE IDENTITY',
+    '## Name',
+    normalizeValue(normalizedIdentity.name, DEFAULT_IDENTITY.name),
+    '',
+    '## Sex',
+    normalizeValue(normalizedIdentity.sex, DEFAULT_IDENTITY.sex),
+    '',
+    '## Language',
+    normalizeValue(normalizedIdentity.language, DEFAULT_IDENTITY.language),
+    '',
+    '## Style',
+    normalizeValue(normalizedIdentity.style, DEFAULT_IDENTITY.style),
   ];
 
   if (normalizedRules) {
-    promptLines.push('Rules:');
+    promptLines.push('');
+    promptLines.push('## Rules');
     promptLines.push(normalizedRules);
   }
 
   if (normalizedOperatingSystem) {
-    promptLines.push(`Operating System: ${normalizedOperatingSystem}`);
+    promptLines.push('');
+    promptLines.push('## Operating System');
+    promptLines.push(normalizedOperatingSystem);
   }
 
   const userMarkdown = loadMarkdownFile('USER.md');
 
   if (userMarkdown) {
-    appendMarkdownSections(promptLines, 'User profile:', userMarkdown);
+    appendMarkdownSections(promptLines, '# USER PROFILE', userMarkdown);
   }
 
   if (hasImapConfig()) {
     const emailMarkdown = loadMarkdownFile('EMAIL.md');
 
     if (emailMarkdown) {
-      appendMarkdownSections(promptLines, 'Email rules:', emailMarkdown);
+      appendMarkdownSections(promptLines, '# EMAIL RULES', emailMarkdown);
     }
   }
 
