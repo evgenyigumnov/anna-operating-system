@@ -1,1 +1,8 @@
 /.env
+/dist/
+/.idea/
+/binary/
+/node_modules/
+/release/
+/package-lock.json
+/1.md
