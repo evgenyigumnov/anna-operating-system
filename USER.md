@@ -1,4 +1,4 @@
-# Name ans surname
+# Name and surname
 
 Evgeny Igumnov
 

@@ -106,6 +106,39 @@ function getEnvValue(key) {
   return entry?.value?.trim() || '';
 }
 
+function hasEnvEntries(keys) {
+  const normalizedKeys = Array.isArray(keys)
+    ? keys
+        .map((key) => String(key || '').trim())
+        .filter(Boolean)
+    : [];
+
+  if (!normalizedKeys.length) {
+    return false;
+  }
+
+  const envContent = readTextFile(ENV_FILE_PATH, '');
+  const envEntries = parseEnvFile(envContent);
+
+  return normalizedKeys.every((key) =>
+    envEntries.some(
+      (entry) =>
+        entry.type === 'entry' &&
+        entry.key === key &&
+        typeof entry.value === 'string' &&
+        entry.value.trim(),
+    ),
+  );
+}
+
+function hasImapConfig() {
+  return hasEnvEntries([
+    'EMAIL_IMAP_HOST',
+    'EMAIL_IMAP_USER',
+    'EMAIL_IMAP_PASSWORD',
+  ]);
+}
+
 function getOpenApiBaseUrl() {
   return getEnvValue('OPENAPI_BASE_URL') || DEFAULT_OPENAPI_BASE_URL;
 }
@@ -196,6 +229,8 @@ module.exports = {
   DEFAULT_OPENAPI_BASE_URL,
   completeSetup,
   getEnvValue,
+  hasEnvEntries,
+  hasImapConfig,
   getOpenApiBaseUrl,
   getSetupState,
   saveIdentityMarkdown,

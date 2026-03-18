@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getBundledPath, getDataPath } = require('./runtime-paths');
+const { hasImapConfig } = require('./setup');
 const {
   loadMarkdownConfig,
   normalizeValue,
@@ -56,6 +57,37 @@ function loadIdentity(identityPath) {
   });
 }
 
+function resolveMarkdownFilePath(fileName) {
+  const normalizedFileName = String(fileName || '').trim();
+
+  if (!normalizedFileName) {
+    return null;
+  }
+
+  const runtimePath = getDataPath(normalizedFileName);
+
+  if (fs.existsSync(runtimePath)) {
+    return runtimePath;
+  }
+
+  const bundledPath = getBundledPath(normalizedFileName);
+  return fs.existsSync(bundledPath) ? bundledPath : null;
+}
+
+function loadMarkdownFile(fileName) {
+  const filePath = resolveMarkdownFilePath(fileName);
+
+  if (!filePath) {
+    return '';
+  }
+
+  try {
+    return fs.readFileSync(filePath, 'utf8').trim();
+  } catch (_error) {
+    return '';
+  }
+}
+
 function buildIdentityPrompt(identity) {
   const normalizedIdentity = {
     ...DEFAULT_IDENTITY,
@@ -79,6 +111,24 @@ function buildIdentityPrompt(identity) {
 
   if (normalizedOperatingSystem) {
     promptLines.push(`Operating System: ${normalizedOperatingSystem}`);
+  }
+
+  const userMarkdown = loadMarkdownFile('USER.md');
+
+  if (userMarkdown) {
+    promptLines.push('');
+    promptLines.push('User profile config:');
+    promptLines.push(userMarkdown);
+  }
+
+  if (hasImapConfig()) {
+    const emailMarkdown = loadMarkdownFile('EMAIL.md');
+
+    if (emailMarkdown) {
+      promptLines.push('');
+      promptLines.push('Email rules config:');
+      promptLines.push(emailMarkdown);
+    }
   }
 
   return promptLines.join('\n');

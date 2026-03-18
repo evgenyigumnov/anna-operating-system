@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { buildIdentityPrompt, loadIdentity } = require('./identity');
+const { hasImapConfig } = require('./setup');
 const { getOpenApiBaseUrl } = require('./setup');
 const {
   logAssistantMessage,
@@ -60,6 +61,10 @@ function loadTools(options = {}) {
   const excludedToolNames = new Set(
     Array.isArray(options.excludedToolNames) ? options.excludedToolNames : [],
   );
+
+  if (!hasImapConfig()) {
+    excludedToolNames.add('manage_email');
+  }
 
   if (!fs.existsSync(toolsDirectory)) {
     return {
