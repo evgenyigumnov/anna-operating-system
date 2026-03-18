@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { runInferenceSession, extractTextContent } = require('./openai');
 const { logInferenceError, logTaskEvent } = require('./logger');
+const { deliverConversationEntry } = require('./message-delivery');
 const {
   MAX_HISTORY_ITEMS,
   TASKS_DIRECTORY,
@@ -22,6 +23,12 @@ const taskFromStepsTool = require('./tools/task_from_steps');
 const taskTimers = new Map();
 const runningTasks = new Set();
 let runnerOptions = {};
+
+function emitTaskResult(taskResult, options = runnerOptions) {
+  if (typeof options?.onTaskResult === 'function') {
+    options.onTaskResult(taskResult);
+  }
+}
 
 function convertToMilliseconds(amount, unit) {
   const normalizedUnit = unit.toLowerCase();
@@ -326,6 +333,16 @@ async function runTask(taskConfig, options = {}) {
       fileName: taskConfig.fileName,
       output,
     });
+    emitTaskResult(
+      {
+        taskId: taskConfig.id,
+        fileName: taskConfig.fileName,
+        output,
+        steps: execution.steps,
+      },
+      options,
+    );
+
     if (scheduleConfig.kind === 'once' || scheduleConfig.kind === 'delayed_once') {
       fs.unlinkSync(taskConfig.filePath);
       deleteTaskState(taskConfig.id);
@@ -460,8 +477,68 @@ async function startTaskRunner(options = {}) {
   await Promise.allSettled(taskFiles.map((taskFilePath) => registerTask(taskFilePath, options)));
 }
 
+async function runTaskFile(taskFilePath, options = {}) {
+  runnerOptions = options;
+  cleanupStateForMissingTasks(listTaskFiles());
+  return registerTask(taskFilePath, options);
+}
+
+function parseCliArgs(argv) {
+  const args = Array.isArray(argv) ? argv : [];
+  let taskFilePath = '';
+
+  for (let index = 0; index < args.length; index += 1) {
+    const current = args[index];
+
+    if (current === '--task-file') {
+      taskFilePath = String(args[index + 1] || '').trim();
+      index += 1;
+    }
+  }
+
+  return {
+    taskFilePath,
+  };
+}
+
+async function runAsStandaloneProcess() {
+  const { taskFilePath } = parseCliArgs(process.argv.slice(2));
+
+  const options = {
+    async onTaskResult(taskResult) {
+      const output = taskResult?.output?.trim();
+
+      if (!output || output === SILENCE_TOKEN) {
+        return;
+      }
+
+      await deliverConversationEntry({
+        role: 'assistant',
+        content: output,
+      });
+    },
+  };
+
+  if (taskFilePath) {
+    await runTaskFile(taskFilePath, options);
+    return;
+  }
+
+  await startTaskRunner(options);
+}
+
 module.exports = {
   registerTask,
+  runTaskFile,
   startTaskRunner,
   unregisterTask,
 };
+
+if (require.main === module) {
+  runAsStandaloneProcess().catch((error) => {
+    logInferenceError(error, {
+      stage: 'task_runner_cli',
+    });
+    process.exitCode = 1;
+  });
+}

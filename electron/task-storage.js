@@ -230,6 +230,7 @@ module.exports = {
   TASKS_DIRECTORY,
   buildHistoryValue,
   createTaskFile,
+  createTaskMarkdown,
   deleteTaskFile,
   deleteTaskState,
   ensureTasksDirectory,

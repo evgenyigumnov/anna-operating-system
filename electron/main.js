@@ -2,6 +2,7 @@ const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { loadIdentity } = require('./identity');
 const { runInferenceSession } = require('./openai');
+const { startHooks } = require('./hook-runner');
 const {
   completeSetup,
   getEnvValue,
@@ -29,6 +30,7 @@ app.commandLine.appendSwitch('no-sandbox');
 const telegramBridge = createTelegramBridge(getEnvValue('TELEGRAM_TOKEN'));
 setTelegramBridge(telegramBridge);
 let stopTelegramBridge = () => {};
+let stopHooks = async () => {};
 let telegramConversationQueue = Promise.resolve();
 
 function extractTelegramChatIds(conversation) {
@@ -210,6 +212,16 @@ app.whenReady().then(() => {
     });
   }
 
+  startHooks()
+    .then((stop) => {
+      stopHooks = typeof stop === 'function' ? stop : async () => {};
+    })
+    .catch((error) => {
+      logInferenceError(error, {
+        stage: 'hooks_startup',
+      });
+    });
+
   createWindow();
   startTaskRunner({
     onTaskResult(taskResult) {
@@ -241,6 +253,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   stopTelegramBridge();
+  void stopHooks();
 });
 
 app.on('window-all-closed', () => {

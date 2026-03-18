@@ -305,6 +305,87 @@ async function fetchMessageSummaries(client, uids) {
   return messages;
 }
 
+async function getMessageByUidFromClient(client, { folder, messageUid }) {
+  const normalizedFolder = normalizeFolder(folder);
+  const normalizedUid = normalizeMessageUid(messageUid);
+
+  return withMailboxLock(client, normalizedFolder, async () => {
+    let resolvedUid = normalizedUid;
+    let message = await client.fetchOne(
+      String(resolvedUid),
+      {
+        uid: true,
+        flags: true,
+        envelope: true,
+        internalDate: true,
+        source: true,
+        bodyStructure: true,
+      },
+      { uid: true },
+    );
+
+    if (!message?.source) {
+      const fallbackUid = resolveUidFromRecentMessageList(normalizedFolder, normalizedUid);
+
+      if (fallbackUid && fallbackUid !== normalizedUid) {
+        resolvedUid = fallbackUid;
+        message = await client.fetchOne(
+          String(resolvedUid),
+          {
+            uid: true,
+            flags: true,
+            envelope: true,
+            internalDate: true,
+            source: true,
+            bodyStructure: true,
+          },
+          { uid: true },
+        );
+      }
+    }
+
+    if (!message?.source) {
+      throw new Error(
+        `Message UID ${normalizedUid} was not found in folder "${normalizedFolder}".`,
+      );
+    }
+
+    const parsedMessage = await simpleParser(message.source);
+
+    return {
+      folder: normalizedFolder,
+      uid: message.uid ?? resolvedUid,
+      messageId: parsedMessage.messageId || message.envelope?.messageId || null,
+      subject: parsedMessage.subject || message.envelope?.subject || '',
+      date:
+        parsedMessage.date?.toISOString?.() ||
+        message.envelope?.date?.toISOString?.() ||
+        message.internalDate?.toISOString?.() ||
+        null,
+      from: formatAddressList(parsedMessage.from?.value || message.envelope?.from),
+      to: formatAddressList(parsedMessage.to?.value || message.envelope?.to),
+      cc: formatAddressList(parsedMessage.cc?.value || message.envelope?.cc),
+      bcc: formatAddressList(parsedMessage.bcc?.value || message.envelope?.bcc),
+      replyTo: formatAddressList(
+        parsedMessage.replyTo?.value || message.envelope?.replyTo,
+      ),
+      seen: message.flags instanceof Set ? message.flags.has('\\Seen') : null,
+      text: parsedMessage.text || '',
+      html: parsedMessage.html || '',
+      attachments: Array.isArray(parsedMessage.attachments)
+        ? parsedMessage.attachments.map((attachment) => ({
+            filename: attachment.filename || null,
+            contentType: attachment.contentType || null,
+            size:
+              typeof attachment.size === 'number' ? attachment.size : attachment.content?.length || 0,
+            contentDisposition: attachment.contentDisposition || null,
+            cid: attachment.cid || null,
+          }))
+        : [],
+    };
+  });
+}
+
 async function listFolderMessages({ folder, mode, limit, query }) {
   const normalizedFolder = normalizeFolder(folder);
   const normalizedMode = String(mode || '').trim().toLowerCase() || 'latest';
@@ -350,86 +431,7 @@ async function listFolderMessages({ folder, mode, limit, query }) {
 }
 
 async function getMessageByUid({ folder, messageUid }) {
-  const normalizedFolder = normalizeFolder(folder);
-  const normalizedUid = normalizeMessageUid(messageUid);
-
-  return withImapClient((client) =>
-    withMailboxLock(client, normalizedFolder, async () => {
-      let resolvedUid = normalizedUid;
-      let message = await client.fetchOne(
-        String(resolvedUid),
-        {
-          uid: true,
-          flags: true,
-          envelope: true,
-          internalDate: true,
-          source: true,
-          bodyStructure: true,
-        },
-        { uid: true },
-      );
-
-      if (!message?.source) {
-        const fallbackUid = resolveUidFromRecentMessageList(normalizedFolder, normalizedUid);
-
-        if (fallbackUid && fallbackUid !== normalizedUid) {
-          resolvedUid = fallbackUid;
-          message = await client.fetchOne(
-            String(resolvedUid),
-            {
-              uid: true,
-              flags: true,
-              envelope: true,
-              internalDate: true,
-              source: true,
-              bodyStructure: true,
-            },
-            { uid: true },
-          );
-        }
-      }
-
-      if (!message?.source) {
-        throw new Error(
-          `Message UID ${normalizedUid} was not found in folder "${normalizedFolder}".`,
-        );
-      }
-
-      const parsedMessage = await simpleParser(message.source);
-
-      return {
-        folder: normalizedFolder,
-        uid: message.uid ?? resolvedUid,
-        messageId: parsedMessage.messageId || message.envelope?.messageId || null,
-        subject: parsedMessage.subject || message.envelope?.subject || '',
-        date:
-          parsedMessage.date?.toISOString?.() ||
-          message.envelope?.date?.toISOString?.() ||
-          message.internalDate?.toISOString?.() ||
-          null,
-        from: formatAddressList(parsedMessage.from?.value || message.envelope?.from),
-        to: formatAddressList(parsedMessage.to?.value || message.envelope?.to),
-        cc: formatAddressList(parsedMessage.cc?.value || message.envelope?.cc),
-        bcc: formatAddressList(parsedMessage.bcc?.value || message.envelope?.bcc),
-        replyTo: formatAddressList(
-          parsedMessage.replyTo?.value || message.envelope?.replyTo,
-        ),
-        seen: message.flags instanceof Set ? message.flags.has('\\Seen') : null,
-        text: parsedMessage.text || '',
-        html: parsedMessage.html || '',
-        attachments: Array.isArray(parsedMessage.attachments)
-          ? parsedMessage.attachments.map((attachment) => ({
-              filename: attachment.filename || null,
-              contentType: attachment.contentType || null,
-              size:
-                typeof attachment.size === 'number' ? attachment.size : attachment.content?.length || 0,
-              contentDisposition: attachment.contentDisposition || null,
-              cid: attachment.cid || null,
-            }))
-          : [],
-      };
-    }),
-  );
+  return withImapClient((client) => getMessageByUidFromClient(client, { folder, messageUid }));
 }
 
 async function deleteMessageByUid({ folder, messageUid }) {
@@ -530,6 +532,7 @@ module.exports = {
   buildSmtpConfig,
   createImapClient,
   deleteMessageByUid,
+  getMessageByUidFromClient,
   getMessageByUid,
   listFolderMessages,
   listMailFolders,
