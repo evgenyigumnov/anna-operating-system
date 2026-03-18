@@ -19,13 +19,17 @@ The application can extend the main assistant prompt with additional Markdown fi
 
 
 - Runs as an Electron desktop app with a React frontend.
-- Sends the chat conversation to a model exposed through an OpenAI-compatible endpoint.
-- Streams the answer into the UI while the model is generating it.
-- Loads assistant identity and behavior rules from Markdown files.
-- Supports tool calling from the model.
-- Runs background tasks described as Markdown files in `electron/tasks`.
-- Pushes task results into the main conversation automatically.
-- First time launch application step by step wizard for user configuration.
+- Shows a local chat interface with Markdown rendering for assistant replies.
+- Persists conversation history locally and restores it on the next launch.
+- Sends the conversation to a model exposed through an OpenAI-compatible API endpoint.
+- Streams assistant output into the UI while the model is generating it.
+- Loads the assistant identity and prompt rules from Markdown files such as `IDENTITY.md`, `USER.md`, and `EMAIL.md`.
+- Supports model tool calling through the implementations in `electron/tools`.
+- Includes a first-launch step-by-step wizard that lets the user configure assistant identity and `OPENAPI_BASE_URL`.
+- Runs background tasks defined as Markdown files and executes them on schedules such as immediate, delayed, hourly, and daily.
+- Pushes non-silent task results back into the main conversation automatically.
+- Starts optional background hooks from `electron/hooks`, including email polling when IMAP is configured.
+- Starts an optional Telegram bridge when `TELEGRAM_TOKEN` is configured, mirrors conversation messages, and replies to Telegram chats.
 
 ## Available tools
 
