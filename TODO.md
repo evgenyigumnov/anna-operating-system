@@ -11,7 +11,7 @@
 
 ## Features
 - [ ] Step by step wizard for new users in first time startup application
-   -  [ ]  Specify IDENTITY.md
+   -  [x]  Specify IDENTITY.md
    -  [ ]  Telegram settings
    -  [ ]  Brave settings
    -  [ ]  Google Calendar settings
