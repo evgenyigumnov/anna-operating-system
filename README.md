@@ -5,6 +5,14 @@ Anna Operating System is a local desktop assistant built with Electron and React
 The current identity of the assistant is defined in [IDENTITY.md](IDENTITY.md): the assistant is named Anna, speaks English, and answers in a simple, concise style with a sense of humor. The application persists chat history locally and renders assistant responses as Markdown.
 If `TELEGRAM_TOKEN` is defined in `.env`, the app also starts a Telegram bot bridge: incoming Telegram text messages are added to the main conversation and assistant replies are mirrored back to Telegram.
 
+## Markdown configuration files
+
+The application can extend the main assistant prompt with additional Markdown files:
+
+- [IDENTITY.md](IDENTITY.md): defines the assistant identity, style, language, rules, and operating system context.
+- [USER.md](USER.md): adds a user profile block to the system prompt. Use it for stable personal context such as name, location, family, preferences, and communication rules.
+- [EMAIL.md](EMAIL.md): adds email-specific rules to the system prompt when IMAP is configured. Use it to describe which emails are important, how to summarize them, when to stay silent, and what reply format to follow.
+
 ## What the project already does
 
 ![ui](ui.png)
@@ -29,6 +37,13 @@ The current implementation in `electron/tools` supports these actions:
 - `manage_tasks`: list, create, and delete background tasks stored as Markdown files.
 - `manage_email`: list folders, list message summaries, read a full message, delete a message, and send a message through Gmail IMAP/SMTP.
 - `task_from_steps`: internal helper for multi-step task execution.
+
+## Hooks
+
+Run background logic on app startup (e.g. watchers, listeners). Implementation in `electron/hooks` supports these actions:
+
+- `email` — watches inbox and creates tasks for new emails
+
 
 ## Background task system
 
@@ -55,15 +70,6 @@ Supported schedules at the moment:
 Task history can be disabled with `No` or configured as `Last N messages` so repeated runs can decide whether to stay silent. Silent task output is implemented through the exact token `KEEP_SILENCE`.
 
 One-time tasks are deleted automatically after a successful run. Periodic tasks are rescheduled after each execution.
-
-## Example task files
-
-The repository already contains task examples in `electron/tasks-example`:
-
-- Check disk space once a day and notify only when `/` has less than 3 GB free.
-- Check the New York Times homepage every 6 hours and notify only when important news about Russia appears, while avoiding repeated notifications.
-- Inspect memory usage immediately and suggest which apps should be closed.
-- Create a reminder that fires after 1 minute.
 
 ## Example user messages
 
@@ -95,7 +101,7 @@ These are examples of messages the current assistant should be able to handle be
 1. Optional: install Ubuntu 22.04 in a virtual machine and do the next steps there.
 2. Install Ollama. Set enviroment variable `OLLAMA_HOST=0.0.0.0:11434` before starting Ollama.
 3. Launch Ollama and log in to the server to use cloud-backed models.
-4. Run `ollama pull gpt-oss:120b-cloud`.
+4. Run `ollama pull glm-5:cloud`.
 5. Optional: run `ollama pull embeddinggemma` for future RAG embeddings support.
 6. Run `git clone git@github.com:evgenyigumnov/anna-operating-system.git`.
 7. Run `cd anna-operating-system`.
@@ -121,13 +127,7 @@ EMAIL_SMTP_PASSWORD=your_app_password
 13. Run `npm start`.
 
 
-## Build instructions
+## Build instructions for Windows
 ```bash
 npm run build:exe
-npm run build:linux
-npm run build:mac
-```
-## Install instructions for linux
-```bash
-sudo snap install anna-operating-system_0.0.1_amd64.snap --dangerous
 ```
