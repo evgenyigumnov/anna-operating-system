@@ -20,6 +20,7 @@ Reply: {{reply_needed}}
 ```
 
 # Email Template (MANDATORY)
+
 ```
 Hello {{name}},
 
