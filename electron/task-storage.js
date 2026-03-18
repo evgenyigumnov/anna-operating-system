@@ -14,6 +14,7 @@ const headingToField = new Map([
   ['instructions', 'instructions'],
   ['history', 'history'],
   ['context', 'history'],
+  ['disabled tools', 'disabledTools'],
 ]);
 
 function trimText(value) {
@@ -85,6 +86,7 @@ function parseTaskFile(filePath) {
       schedule: 'ASAP',
       instructions: '',
       history: 'No',
+      disabledTools: '',
     },
     headingToField,
   });
@@ -92,6 +94,10 @@ function parseTaskFile(filePath) {
   const schedule = trimText(parsed.schedule);
   const instructions = trimText(parsed.instructions);
   const history = trimText(parsed.history);
+  const disabledTools = trimText(parsed.disabledTools)
+    .split(/\r?\n|,/)
+    .map((toolName) => trimText(toolName))
+    .filter(Boolean);
 
   if (!instructions) {
     throw new Error(`Task file "${path.basename(filePath)}" does not contain instructions.`);
@@ -104,6 +110,7 @@ function parseTaskFile(filePath) {
     schedule,
     instructions,
     history,
+    disabledTools,
   };
 }
 
@@ -140,7 +147,11 @@ function getNextTaskPrefix(existingFiles) {
   return String(nextPrefix).padStart(2, '0');
 }
 
-function createTaskMarkdown({ schedule, instructions, history }) {
+function createTaskMarkdown({ schedule, instructions, history, disabledTools }) {
+  const normalizedDisabledTools = Array.isArray(disabledTools)
+    ? disabledTools.map((toolName) => trimText(toolName)).filter(Boolean)
+    : [];
+
   return [
     '# Schedule',
     '',
@@ -154,10 +165,18 @@ function createTaskMarkdown({ schedule, instructions, history }) {
     '',
     trimText(history) || 'No',
     '',
+    ...(normalizedDisabledTools.length
+      ? [
+          '# Disabled Tools',
+          '',
+          normalizedDisabledTools.join('\n'),
+          '',
+        ]
+      : []),
   ].join('\n');
 }
 
-function createTaskFile({ title, schedule, instructions, recentRunsForAnalysis }) {
+function createTaskFile({ title, schedule, instructions, recentRunsForAnalysis, disabledTools }) {
   const normalizedTitle = trimText(title);
   const normalizedInstructions = trimText(instructions);
 
@@ -188,6 +207,7 @@ function createTaskFile({ title, schedule, instructions, recentRunsForAnalysis }
       schedule: trimText(schedule) || 'ASAP',
       instructions: normalizedInstructions,
       history,
+      disabledTools,
     }),
     'utf8',
   );

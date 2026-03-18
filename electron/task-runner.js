@@ -226,6 +226,7 @@ function normalizeTaskOutput(rawResult) {
 async function executeTask(taskConfig, taskState) {
   const stepHistory = buildStepHistory(taskConfig, taskState);
   const taskPrompt = buildTaskPrompt(taskConfig);
+  const taskDisabledTools = Array.isArray(taskConfig.disabledTools) ? taskConfig.disabledTools : [];
   const result = await taskFromStepsTool.handler(
     {
       task: taskPrompt,
@@ -238,6 +239,9 @@ async function executeTask(taskConfig, taskState) {
         );
 
         excludedToolNames.add('manage_tasks');
+        for (const toolName of taskDisabledTools) {
+          excludedToolNames.add(toolName);
+        }
 
         return runInferenceSession(conversation, {
           ...options,

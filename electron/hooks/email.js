@@ -77,6 +77,7 @@ function createEmailTask(message) {
     schedule: 'ASAP',
     instructions: buildTaskInstructions(message),
     recentRunsForAnalysis: null,
+    disabledTools: ['notify_user'],
   });
 }
 
