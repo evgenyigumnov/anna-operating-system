@@ -3,10 +3,25 @@ const path = require('path');
 const { getBundledPath, getDataPath, isPackagedRuntime } = require('./runtime-paths');
 
 const IDENTITY_FILE_PATH = getDataPath('IDENTITY.md');
+const USER_FILE_PATH = getDataPath('USER.md');
+const EMAIL_RULES_FILE_PATH = getDataPath('EMAIL.md');
 const ENV_FILE_PATH = getDataPath('.env');
 const SETUP_LOCK_FILE_PATH = getDataPath('already_setup.lock');
 const BUNDLED_IDENTITY_FILE_PATH = getBundledPath('IDENTITY.md');
 const DEFAULT_OPENAPI_BASE_URL = 'http://127.0.0.1:11434/v1';
+const EMAIL_ENV_KEYS = [
+  'EMAIL_IMAP_HOST',
+  'EMAIL_IMAP_PORT',
+  'EMAIL_IMAP_SECURE',
+  'EMAIL_IMAP_USER',
+  'EMAIL_IMAP_PASSWORD',
+  'EMAIL_SMTP_HOST',
+  'EMAIL_SMTP_PORT',
+  'EMAIL_SMTP_SECURE',
+  'EMAIL_SMTP_USER',
+  'EMAIL_SMTP_PASSWORD',
+];
+const TELEGRAM_ENV_KEYS = ['TELEGRAM_TOKEN'];
 
 function ensureParentDirectory(filePath) {
   const parentDirectory = path.dirname(filePath);
@@ -27,6 +42,12 @@ function readTextFile(filePath, fallback = '') {
 function writeTextFile(filePath, content) {
   ensureParentDirectory(filePath);
   fs.writeFileSync(filePath, String(content), 'utf8');
+}
+
+function removeFileIfExists(filePath) {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
 }
 
 function ensureIdentityFile() {
@@ -52,6 +73,10 @@ function getIdentityMarkdown() {
 
   const bundledIdentity = readTextFile(BUNDLED_IDENTITY_FILE_PATH, '');
   return readTextFile(IDENTITY_FILE_PATH, bundledIdentity);
+}
+
+function getOptionalMarkdown(filePath) {
+  return readTextFile(filePath, '');
 }
 
 function parseEnvFile(content) {
@@ -106,6 +131,75 @@ function getEnvValue(key) {
   return entry?.value?.trim() || '';
 }
 
+function applyEnvUpdates(changes) {
+  const normalizedEntries = Object.entries(changes || {}).map(([key, value]) => [
+    String(key || '').trim(),
+    String(value || '').trim(),
+  ]);
+  const normalizedMap = new Map(
+    normalizedEntries.filter(([key]) => key),
+  );
+  const envContent = readTextFile(ENV_FILE_PATH, '');
+  const envEntries = parseEnvFile(envContent);
+  const nextEntries = [];
+  const updatedKeys = new Set();
+
+  for (const entry of envEntries) {
+    if (entry.type !== 'entry' || !normalizedMap.has(entry.key)) {
+      nextEntries.push(entry);
+      continue;
+    }
+
+    if (updatedKeys.has(entry.key)) {
+      continue;
+    }
+
+    const nextValue = normalizedMap.get(entry.key);
+    updatedKeys.add(entry.key);
+
+    if (!nextValue) {
+      continue;
+    }
+
+    nextEntries.push({
+      type: 'entry',
+      key: entry.key,
+      value: nextValue,
+    });
+  }
+
+  for (const [key, value] of normalizedEntries) {
+    if (!key || updatedKeys.has(key) || !value) {
+      continue;
+    }
+
+    if (nextEntries.length && nextEntries.at(-1)?.type === 'raw' && nextEntries.at(-1)?.value !== '') {
+      nextEntries.push({ type: 'raw', value: '' });
+    }
+
+    nextEntries.push({
+      type: 'entry',
+      key,
+      value,
+    });
+    updatedKeys.add(key);
+  }
+
+  writeTextFile(ENV_FILE_PATH, stringifyEnvFile(nextEntries));
+
+  for (const [key, value] of normalizedEntries) {
+    if (!key) {
+      continue;
+    }
+
+    if (value) {
+      process.env[key] = value;
+    } else {
+      delete process.env[key];
+    }
+  }
+}
+
 function hasEnvEntries(keys) {
   const normalizedKeys = Array.isArray(keys)
     ? keys
@@ -133,7 +227,6 @@ function hasEnvEntries(keys) {
 
 function hasImapConfig() {
   return hasEnvEntries([
-    'EMAIL_IMAP_HOST',
     'EMAIL_IMAP_USER',
     'EMAIL_IMAP_PASSWORD',
   ]);
@@ -199,19 +292,69 @@ function getSetupState() {
   return {
     isFirstLaunch: !fs.existsSync(SETUP_LOCK_FILE_PATH),
     identityMarkdown: getIdentityMarkdown(),
+    userMarkdown: getOptionalMarkdown(USER_FILE_PATH),
+    emailMarkdown: getOptionalMarkdown(EMAIL_RULES_FILE_PATH),
     openApiBaseUrl: getOpenApiBaseUrl(),
+    emailImapHost: getEnvValue('EMAIL_IMAP_HOST'),
+    emailImapPort: getEnvValue('EMAIL_IMAP_PORT'),
+    emailImapSecure: getEnvValue('EMAIL_IMAP_SECURE'),
+    emailImapUser: getEnvValue('EMAIL_IMAP_USER'),
+    emailImapPassword: getEnvValue('EMAIL_IMAP_PASSWORD'),
+    emailSmtpHost: getEnvValue('EMAIL_SMTP_HOST'),
+    emailSmtpPort: getEnvValue('EMAIL_SMTP_PORT'),
+    emailSmtpSecure: getEnvValue('EMAIL_SMTP_SECURE'),
+    emailSmtpUser: getEnvValue('EMAIL_SMTP_USER'),
+    emailSmtpPassword: getEnvValue('EMAIL_SMTP_PASSWORD'),
+    telegramToken: getEnvValue('TELEGRAM_TOKEN'),
   };
 }
 
-function saveIdentityMarkdown(markdown) {
+function saveMarkdownFile(filePath, markdown, { required = false } = {}) {
   const normalizedMarkdown = String(markdown || '').trim();
 
   if (!normalizedMarkdown) {
-    throw new Error('IDENTITY.md content is required.');
+    if (required) {
+      throw new Error(`${path.basename(filePath)} content is required.`);
+    }
+
+    removeFileIfExists(filePath);
+    return '';
   }
 
-  writeTextFile(IDENTITY_FILE_PATH, `${normalizedMarkdown}\n`);
+  writeTextFile(filePath, `${normalizedMarkdown}\n`);
   return normalizedMarkdown;
+}
+
+function saveIdentityMarkdown(markdown) {
+  return saveMarkdownFile(IDENTITY_FILE_PATH, markdown, { required: true });
+}
+
+function saveUserMarkdown(markdown) {
+  return saveMarkdownFile(USER_FILE_PATH, markdown);
+}
+
+function saveEmailMarkdown(markdown) {
+  return saveMarkdownFile(EMAIL_RULES_FILE_PATH, markdown);
+}
+
+function saveEmailSettings(settings) {
+  applyEnvUpdates(
+    Object.fromEntries(
+      EMAIL_ENV_KEYS.map((key) => [key, settings?.[key] || '']),
+    ),
+  );
+
+  return Object.fromEntries(EMAIL_ENV_KEYS.map((key) => [key, getEnvValue(key)]));
+}
+
+function saveTelegramSettings(settings) {
+  applyEnvUpdates(
+    Object.fromEntries(
+      TELEGRAM_ENV_KEYS.map((key) => [key, settings?.[key] || '']),
+    ),
+  );
+
+  return Object.fromEntries(TELEGRAM_ENV_KEYS.map((key) => [key, getEnvValue(key)]));
 }
 
 function completeSetup() {
@@ -233,6 +376,10 @@ module.exports = {
   hasImapConfig,
   getOpenApiBaseUrl,
   getSetupState,
+  saveEmailMarkdown,
+  saveEmailSettings,
   saveIdentityMarkdown,
+  saveTelegramSettings,
+  saveUserMarkdown,
   setOpenApiBaseUrl,
 };

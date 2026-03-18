@@ -23,6 +23,7 @@ function IdentityStep({ formData, onChange }) {
 }
 
 export const wizardStep = {
+  order: 1,
   title: 'Identity',
   validate(formData) {
     if (!formData.identityMarkdown.trim()) {

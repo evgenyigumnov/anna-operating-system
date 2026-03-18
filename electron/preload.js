@@ -9,6 +9,14 @@ contextBridge.exposeInMainWorld('appControls', {
   getConversationHistory: () => ipcRenderer.invoke('app:get-conversation-history'),
   syncConversationHistory: (conversation) =>
     ipcRenderer.invoke('app:sync-conversation-history', conversation),
+  saveUserMarkdown: (markdown) =>
+    ipcRenderer.invoke('app:save-user-markdown', markdown),
+  saveEmailMarkdown: (markdown) =>
+    ipcRenderer.invoke('app:save-email-markdown', markdown),
+  saveEmailSettings: (settings) =>
+    ipcRenderer.invoke('app:save-email-settings', settings),
+  saveTelegramSettings: (settings) =>
+    ipcRenderer.invoke('app:save-telegram-settings', settings),
   saveIdentityMarkdown: (markdown) =>
     ipcRenderer.invoke('app:save-identity-markdown', markdown),
   saveOpenApiBaseUrl: (baseUrl) =>

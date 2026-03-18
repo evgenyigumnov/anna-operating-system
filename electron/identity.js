@@ -57,7 +57,7 @@ function loadIdentity(identityPath) {
   });
 }
 
-function resolveMarkdownFilePath(fileName) {
+function resolveMarkdownFilePath(fileName, { allowBundledFallback = true } = {}) {
   const normalizedFileName = String(fileName || '').trim();
 
   if (!normalizedFileName) {
@@ -70,12 +70,16 @@ function resolveMarkdownFilePath(fileName) {
     return runtimePath;
   }
 
+  if (!allowBundledFallback) {
+    return null;
+  }
+
   const bundledPath = getBundledPath(normalizedFileName);
   return fs.existsSync(bundledPath) ? bundledPath : null;
 }
 
-function loadMarkdownFile(fileName) {
-  const filePath = resolveMarkdownFilePath(fileName);
+function loadMarkdownFile(fileName, options = {}) {
+  const filePath = resolveMarkdownFilePath(fileName, options);
 
   if (!filePath) {
     return '';
@@ -193,14 +197,18 @@ function buildIdentityPrompt(identity) {
     promptLines.push(normalizedOperatingSystem);
   }
 
-  const userMarkdown = loadMarkdownFile('USER.md');
+  const userMarkdown = loadMarkdownFile('USER.md', {
+    allowBundledFallback: false,
+  });
 
   if (userMarkdown) {
     appendMarkdownSections(promptLines, '# USER PROFILE', userMarkdown);
   }
 
   if (hasImapConfig()) {
-    const emailMarkdown = loadMarkdownFile('EMAIL.md');
+    const emailMarkdown = loadMarkdownFile('EMAIL.md', {
+      allowBundledFallback: false,
+    });
 
     if (emailMarkdown) {
       appendMarkdownSections(promptLines, '# EMAIL RULES', emailMarkdown);

@@ -36,30 +36,35 @@ function persistConversation(nextConversation) {
 }
 
 function orderWizardSteps(stepEntries) {
-  return [...stepEntries].sort(([leftPath], [rightPath]) =>
-    leftPath.localeCompare(rightPath),
-  );
+  return [...stepEntries].sort((leftEntry, rightEntry) => {
+    const leftOrder = Number(leftEntry?.order || Number.MAX_SAFE_INTEGER);
+    const rightOrder = Number(rightEntry?.order || Number.MAX_SAFE_INTEGER);
+
+    if (leftOrder !== rightOrder) {
+      return leftOrder - rightOrder;
+    }
+
+    return leftEntry.id.localeCompare(rightEntry.id);
+  });
 }
 
 async function loadWizardSteps() {
   const modules = await Promise.all(
-    orderWizardSteps(Object.entries(wizardStepLoaders)).map(
-      async ([stepPath, loadModule]) => {
-        const module = await loadModule();
+    Object.entries(wizardStepLoaders).map(async ([stepPath, loadModule]) => {
+      const module = await loadModule();
 
-        if (!module?.wizardStep?.Component) {
-          throw new Error(`Wizard step "${stepPath}" is invalid.`);
-        }
+      if (!module?.wizardStep?.Component) {
+        throw new Error(`Wizard step "${stepPath}" is invalid.`);
+      }
 
-        return {
-          id: stepPath.split('/').at(-1)?.replace(/\.[^.]+$/, '') || stepPath,
-          ...module.wizardStep,
-        };
-      },
-    ),
+      return {
+        id: stepPath.split('/').at(-1)?.replace(/\.[^.]+$/, '') || stepPath,
+        ...module.wizardStep,
+      };
+    }),
   );
 
-  return modules;
+  return orderWizardSteps(modules);
 }
 
 const ChatScreen = lazy(() =>
@@ -139,7 +144,20 @@ function App() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(false);
   const [formData, setFormData] = useState({
     identityMarkdown: '',
+    userMarkdown: '',
+    emailMarkdown: '',
     openApiBaseUrl: '',
+    emailImapHost: '',
+    emailImapPort: '',
+    emailImapSecure: '',
+    emailImapUser: '',
+    emailImapPassword: '',
+    emailSmtpHost: '',
+    emailSmtpPort: '',
+    emailSmtpSecure: '',
+    emailSmtpUser: '',
+    emailSmtpPassword: '',
+    telegramToken: '',
   });
   const conversationRef = useRef(null);
 
@@ -167,7 +185,20 @@ function App() {
         setIsFirstLaunch(Boolean(setupState?.isFirstLaunch));
         setFormData({
           identityMarkdown: setupState?.identityMarkdown || '',
+          userMarkdown: setupState?.userMarkdown || '',
+          emailMarkdown: setupState?.emailMarkdown || '',
           openApiBaseUrl: setupState?.openApiBaseUrl || '',
+          emailImapHost: setupState?.emailImapHost || '',
+          emailImapPort: setupState?.emailImapPort || '',
+          emailImapSecure: setupState?.emailImapSecure || '',
+          emailImapUser: setupState?.emailImapUser || '',
+          emailImapPassword: setupState?.emailImapPassword || '',
+          emailSmtpHost: setupState?.emailSmtpHost || '',
+          emailSmtpPort: setupState?.emailSmtpPort || '',
+          emailSmtpSecure: setupState?.emailSmtpSecure || '',
+          emailSmtpUser: setupState?.emailSmtpUser || '',
+          emailSmtpPassword: setupState?.emailSmtpPassword || '',
+          telegramToken: setupState?.telegramToken || '',
         });
         setConversation(
           normalizedStoredConversation.length
@@ -201,6 +232,20 @@ function App() {
   useEffect(() => {
     document.title = `${assistantName} Operating System`;
   }, [assistantName]);
+
+  const visibleWizardSteps = wizardSteps.filter((step) =>
+    typeof step?.isVisible === 'function' ? step.isVisible(formData) : true,
+  );
+
+  useEffect(() => {
+    setWizardStepIndex((currentIndex) => {
+      if (!visibleWizardSteps.length) {
+        return 0;
+      }
+
+      return Math.min(currentIndex, visibleWizardSteps.length - 1);
+    });
+  }, [visibleWizardSteps.length]);
 
   useEffect(() => {
     const unsubscribe = window.appControls.onConversationMessage((entry) => {
@@ -337,7 +382,7 @@ function App() {
   };
 
   const handleWizardNext = async () => {
-    const currentStep = wizardSteps[wizardStepIndex];
+    const currentStep = visibleWizardSteps[wizardStepIndex];
 
     if (!currentStep || isWizardSaving) {
       return;
@@ -359,7 +404,7 @@ function App() {
         await currentStep.persist(formData);
       }
 
-      if (wizardStepIndex < wizardSteps.length - 1) {
+      if (wizardStepIndex < visibleWizardSteps.length - 1) {
         setWizardStepIndex((currentIndex) => currentIndex + 1);
       } else {
         await window.appControls.completeSetup();
@@ -387,7 +432,7 @@ function App() {
   }
 
   if (isFirstLaunch) {
-    const currentStep = wizardSteps[wizardStepIndex];
+    const currentStep = visibleWizardSteps[wizardStepIndex];
     const StepComponent = currentStep?.Component;
 
     return (
@@ -396,7 +441,7 @@ function App() {
           <div className="wizard-header">
             <h1>Application setup wizard</h1>
             <p className="wizard-progress">
-              Step {wizardStepIndex + 1} of {wizardSteps.length || 1}
+              Step {wizardStepIndex + 1} of {visibleWizardSteps.length || 1}
             </p>
           </div>
           {StepComponent ? (
@@ -417,7 +462,7 @@ function App() {
             <button type="button" onClick={handleWizardNext} disabled={isWizardSaving}>
               {isWizardSaving
                 ? 'Saving...'
-                : wizardStepIndex === wizardSteps.length - 1
+                : wizardStepIndex === visibleWizardSteps.length - 1
                   ? 'Finish'
                   : 'Next'}
             </button>

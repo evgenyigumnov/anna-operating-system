@@ -23,6 +23,7 @@ function OpenApiBaseUrlStep({ formData, onChange }) {
 }
 
 export const wizardStep = {
+  order: 6,
   title: 'OpenAPI Base URL',
   validate(formData) {
     if (!formData.openApiBaseUrl.trim()) {

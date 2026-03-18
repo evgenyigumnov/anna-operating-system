@@ -7,7 +7,11 @@ const {
   completeSetup,
   getEnvValue,
   getSetupState,
+  saveEmailMarkdown,
+  saveEmailSettings,
   saveIdentityMarkdown,
+  saveTelegramSettings,
+  saveUserMarkdown,
   setOpenApiBaseUrl,
 } = require('./setup');
 const { startTaskRunner } = require('./task-runner');
@@ -101,6 +105,18 @@ app.whenReady().then(() => {
   ipcMain.handle('app:get-conversation-history', () => readConversationHistory());
   ipcMain.handle('app:sync-conversation-history', (_event, conversation) =>
     writeConversationHistory(conversation),
+  );
+  ipcMain.handle('app:save-user-markdown', (_event, markdown) =>
+    saveUserMarkdown(markdown),
+  );
+  ipcMain.handle('app:save-email-markdown', (_event, markdown) =>
+    saveEmailMarkdown(markdown),
+  );
+  ipcMain.handle('app:save-email-settings', (_event, settings) =>
+    saveEmailSettings(settings),
+  );
+  ipcMain.handle('app:save-telegram-settings', (_event, settings) =>
+    saveTelegramSettings(settings),
   );
   ipcMain.handle('app:save-identity-markdown', (_event, markdown) =>
     saveIdentityMarkdown(markdown),
