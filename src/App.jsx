@@ -1,6 +1,13 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {
+  EMAIL_SETTINGS_DEFAULTS,
+  USER_PROFILE_DEFAULTS,
+  buildUserMarkdown,
+  getDefaultEmailMarkdown,
+  parseUserMarkdown,
+} from './wizard/defaults';
 
 const STORAGE_KEY = 'assistant-conversation-history';
 const DEFAULT_ASSISTANT_NAME = 'Анна';
@@ -144,17 +151,28 @@ function App() {
   const [isFirstLaunch, setIsFirstLaunch] = useState(false);
   const [formData, setFormData] = useState({
     identityMarkdown: '',
-    userMarkdown: '',
+    userMarkdown: buildUserMarkdown(USER_PROFILE_DEFAULTS),
+    userFullName: USER_PROFILE_DEFAULTS.fullName,
+    userSex: USER_PROFILE_DEFAULTS.sex,
+    userBirthday: USER_PROFILE_DEFAULTS.birthday,
+    userLanguage: USER_PROFILE_DEFAULTS.language,
+    userCountry: USER_PROFILE_DEFAULTS.country,
+    userCity: USER_PROFILE_DEFAULTS.city,
+    userFamily: USER_PROFILE_DEFAULTS.family,
+    userAnimals: USER_PROFILE_DEFAULTS.animals,
+    userInterests: USER_PROFILE_DEFAULTS.interests,
+    userRules: USER_PROFILE_DEFAULTS.rules,
+    userNotes: USER_PROFILE_DEFAULTS.notes,
     emailMarkdown: '',
     openApiBaseUrl: '',
-    emailImapHost: '',
-    emailImapPort: '',
-    emailImapSecure: '',
+    emailImapHost: EMAIL_SETTINGS_DEFAULTS.emailImapHost,
+    emailImapPort: EMAIL_SETTINGS_DEFAULTS.emailImapPort,
+    emailImapSecure: EMAIL_SETTINGS_DEFAULTS.emailImapSecure,
     emailImapUser: '',
     emailImapPassword: '',
-    emailSmtpHost: '',
-    emailSmtpPort: '',
-    emailSmtpSecure: '',
+    emailSmtpHost: EMAIL_SETTINGS_DEFAULTS.emailSmtpHost,
+    emailSmtpPort: EMAIL_SETTINGS_DEFAULTS.emailSmtpPort,
+    emailSmtpSecure: EMAIL_SETTINGS_DEFAULTS.emailSmtpSecure,
     emailSmtpUser: '',
     emailSmtpPassword: '',
     telegramToken: '',
@@ -180,24 +198,46 @@ function App() {
           ? storedConversation
           : [];
         const localConversation = loadConversation();
+        const userProfile = parseUserMarkdown(setupState?.userMarkdown || '');
+        const userMarkdown = buildUserMarkdown(userProfile);
+        const emailMarkdown =
+          setupState?.emailMarkdown || getDefaultEmailMarkdown(userProfile.fullName);
 
         setAssistantName(nextAssistantName);
         setIsFirstLaunch(Boolean(setupState?.isFirstLaunch));
         setFormData({
           identityMarkdown: setupState?.identityMarkdown || '',
-          userMarkdown: setupState?.userMarkdown || '',
-          emailMarkdown: setupState?.emailMarkdown || '',
+          userMarkdown,
+          userFullName: userProfile.fullName,
+          userSex: userProfile.sex,
+          userBirthday: userProfile.birthday,
+          userLanguage: userProfile.language,
+          userCountry: userProfile.country,
+          userCity: userProfile.city,
+          userFamily: userProfile.family,
+          userAnimals: userProfile.animals,
+          userInterests: userProfile.interests,
+          userRules: userProfile.rules,
+          userNotes: userProfile.notes,
+          emailMarkdown,
           openApiBaseUrl: setupState?.openApiBaseUrl || '',
-          emailImapHost: setupState?.emailImapHost || '',
-          emailImapPort: setupState?.emailImapPort || '',
-          emailImapSecure: setupState?.emailImapSecure || '',
+          emailImapHost:
+            setupState?.emailImapHost || EMAIL_SETTINGS_DEFAULTS.emailImapHost,
+          emailImapPort:
+            setupState?.emailImapPort || EMAIL_SETTINGS_DEFAULTS.emailImapPort,
+          emailImapSecure:
+            setupState?.emailImapSecure || EMAIL_SETTINGS_DEFAULTS.emailImapSecure,
           emailImapUser: setupState?.emailImapUser || '',
           emailImapPassword: setupState?.emailImapPassword || '',
-          emailSmtpHost: setupState?.emailSmtpHost || '',
-          emailSmtpPort: setupState?.emailSmtpPort || '',
-          emailSmtpSecure: setupState?.emailSmtpSecure || '',
-          emailSmtpUser: setupState?.emailSmtpUser || '',
-          emailSmtpPassword: setupState?.emailSmtpPassword || '',
+          emailSmtpHost:
+            setupState?.emailSmtpHost || EMAIL_SETTINGS_DEFAULTS.emailSmtpHost,
+          emailSmtpPort:
+            setupState?.emailSmtpPort || EMAIL_SETTINGS_DEFAULTS.emailSmtpPort,
+          emailSmtpSecure:
+            setupState?.emailSmtpSecure || EMAIL_SETTINGS_DEFAULTS.emailSmtpSecure,
+          emailSmtpUser: setupState?.emailSmtpUser || setupState?.emailImapUser || '',
+          emailSmtpPassword:
+            setupState?.emailSmtpPassword || setupState?.emailImapPassword || '',
           telegramToken: setupState?.telegramToken || '',
         });
         setConversation(
@@ -365,10 +405,25 @@ function App() {
   };
 
   const handleWizardFieldChange = (field, value) => {
-    setFormData((currentFormData) => ({
-      ...currentFormData,
-      [field]: value,
-    }));
+    setFormData((currentFormData) => {
+      const nextFormData = {
+        ...currentFormData,
+        [field]: value,
+      };
+
+      if (field === 'userFullName') {
+        const currentEmailMarkdown = String(currentFormData.emailMarkdown || '').trim();
+        const currentDefaultEmailMarkdown = getDefaultEmailMarkdown(
+          currentFormData.userFullName,
+        );
+
+        if (!currentEmailMarkdown || currentEmailMarkdown === currentDefaultEmailMarkdown) {
+          nextFormData.emailMarkdown = getDefaultEmailMarkdown(value);
+        }
+      }
+
+      return nextFormData;
+    });
     setWizardError('');
   };
 
@@ -421,6 +476,56 @@ function App() {
     }
   };
 
+  const handleWizardSkipEmail = async () => {
+    if (isWizardSaving) {
+      return;
+    }
+
+    setIsWizardSaving(true);
+    setWizardError('');
+
+    try {
+      await window.appControls.saveEmailSettings({
+        EMAIL_IMAP_HOST: '',
+        EMAIL_IMAP_PORT: '',
+        EMAIL_IMAP_SECURE: '',
+        EMAIL_IMAP_USER: '',
+        EMAIL_IMAP_PASSWORD: '',
+        EMAIL_SMTP_HOST: '',
+        EMAIL_SMTP_PORT: '',
+        EMAIL_SMTP_SECURE: '',
+        EMAIL_SMTP_USER: '',
+        EMAIL_SMTP_PASSWORD: '',
+      });
+      await window.appControls.saveEmailMarkdown('');
+
+      setFormData((currentFormData) => ({
+        ...currentFormData,
+        emailImapHost: EMAIL_SETTINGS_DEFAULTS.emailImapHost,
+        emailImapPort: EMAIL_SETTINGS_DEFAULTS.emailImapPort,
+        emailImapSecure: EMAIL_SETTINGS_DEFAULTS.emailImapSecure,
+        emailImapUser: '',
+        emailImapPassword: '',
+        emailSmtpHost: EMAIL_SETTINGS_DEFAULTS.emailSmtpHost,
+        emailSmtpPort: EMAIL_SETTINGS_DEFAULTS.emailSmtpPort,
+        emailSmtpSecure: EMAIL_SETTINGS_DEFAULTS.emailSmtpSecure,
+        emailSmtpUser: '',
+        emailSmtpPassword: '',
+        emailMarkdown: '',
+      }));
+
+      setWizardStepIndex((currentIndex) =>
+        Math.min(currentIndex + 1, Math.max(visibleWizardSteps.length - 1, 0)),
+      );
+    } catch (error) {
+      setWizardError(
+        error instanceof Error ? error.message : 'Cannot skip email setup.',
+      );
+    } finally {
+      setIsWizardSaving(false);
+    }
+  };
+
   if (!isWizardReady) {
     return (
       <main className="app">
@@ -445,7 +550,12 @@ function App() {
             </p>
           </div>
           {StepComponent ? (
-            <StepComponent formData={formData} onChange={handleWizardFieldChange} />
+            <StepComponent
+              formData={formData}
+              onChange={handleWizardFieldChange}
+              onSkipEmail={handleWizardSkipEmail}
+              isWizardSaving={isWizardSaving}
+            />
           ) : (
             <p className="conversation-placeholder">No setup steps were found.</p>
           )}

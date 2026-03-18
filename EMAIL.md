@@ -27,5 +27,5 @@ Hello {{name}},
 {{message}}
 
 Best regards,
-{{user}}
+{{user_name}}
 ```

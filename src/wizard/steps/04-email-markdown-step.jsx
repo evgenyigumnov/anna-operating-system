@@ -1,3 +1,5 @@
+import { getDefaultEmailMarkdown } from '../defaults';
+
 function hasEmailConfig(formData) {
   return (
     String(formData?.emailImapUser || '').trim() &&
@@ -6,6 +8,10 @@ function hasEmailConfig(formData) {
 }
 
 function EmailMarkdownStep({ formData, onChange }) {
+  const emailMarkdownValue =
+    String(formData.emailMarkdown || '').trim() ||
+    getDefaultEmailMarkdown(formData.userFullName);
+
   return (
     <div className="wizard-step">
       <div className="wizard-step-copy">
@@ -19,7 +25,7 @@ function EmailMarkdownStep({ formData, onChange }) {
         <span>EMAIL.md content</span>
         <textarea
           className="wizard-textarea"
-          value={formData.emailMarkdown}
+          value={emailMarkdownValue}
           onChange={(event) => onChange('emailMarkdown', event.target.value)}
           rows="14"
           placeholder="# Rules&#10;- Important emails only"
@@ -36,7 +42,10 @@ export const wizardStep = {
     return hasEmailConfig(formData);
   },
   async persist(formData) {
-    await window.appControls.saveEmailMarkdown(formData.emailMarkdown);
+    await window.appControls.saveEmailMarkdown(
+      String(formData.emailMarkdown || '').trim() ||
+        getDefaultEmailMarkdown(formData.userFullName),
+    );
   },
   Component: EmailMarkdownStep,
 };
