@@ -31,6 +31,33 @@ setTelegramBridge(telegramBridge);
 let stopTelegramBridge = () => {};
 let telegramConversationQueue = Promise.resolve();
 
+function extractTelegramChatIds(conversation) {
+  if (!Array.isArray(conversation)) {
+    return [];
+  }
+
+  const chatIds = new Set();
+
+  for (const entry of conversation) {
+    const isTelegramEntry = entry?.source === 'telegram';
+    const chatId = entry?.chatId;
+
+    if (
+      !isTelegramEntry ||
+      !(
+        (typeof chatId === 'string' && chatId.trim()) ||
+        typeof chatId === 'number'
+      )
+    ) {
+      continue;
+    }
+
+    chatIds.add(typeof chatId === 'string' ? chatId.trim() : chatId);
+  }
+
+  return [...chatIds];
+}
+
 function sendInferenceEvent(webContents, channel, payload) {
   if (!webContents.isDestroyed()) {
     webContents.send(channel, payload);
@@ -143,6 +170,8 @@ app.whenReady().then(() => {
   });
 
   if (telegramBridge.isEnabled) {
+    telegramBridge.rememberChatIds(extractTelegramChatIds(readConversationHistory()));
+
     stopTelegramBridge = telegramBridge.start((telegramMessage) => {
       telegramConversationQueue = telegramConversationQueue
         .then(async () => {
@@ -150,6 +179,8 @@ app.whenReady().then(() => {
             role: 'user',
             content: telegramMessage.text,
             createdAt: telegramMessage.createdAt,
+            chatId: telegramMessage.chatId,
+            source: 'telegram',
           };
 
           appendConversationEntry(userMessage);

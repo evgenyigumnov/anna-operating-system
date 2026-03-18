@@ -213,6 +213,15 @@ function App() {
       const nextEntry = {
         role: entry?.role === 'user' ? 'user' : 'assistant',
         content,
+        ...(typeof entry?.createdAt === 'string' && entry.createdAt.trim()
+          ? { createdAt: entry.createdAt }
+          : {}),
+        ...(typeof entry?.chatId === 'string' && entry.chatId.trim()
+          ? { chatId: entry.chatId.trim() }
+          : typeof entry?.chatId === 'number'
+            ? { chatId: entry.chatId }
+            : {}),
+        ...(entry?.source === 'telegram' ? { source: 'telegram' } : {}),
       };
 
       setConversation((currentConversation) => {

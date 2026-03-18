@@ -22,6 +22,12 @@ function normalizeEntry(entry) {
       typeof entry.createdAt === 'string' && entry.createdAt.trim()
         ? entry.createdAt
         : new Date().toISOString(),
+    ...(typeof entry.chatId === 'string' && entry.chatId.trim()
+      ? { chatId: entry.chatId.trim() }
+      : typeof entry.chatId === 'number'
+        ? { chatId: entry.chatId }
+        : {}),
+    ...(entry.source === 'telegram' ? { source: 'telegram' } : {}),
   };
 }
 

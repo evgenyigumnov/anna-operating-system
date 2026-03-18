@@ -1,8 +1,12 @@
+const fs = require('fs');
+const path = require('path');
 const { logTaskEvent } = require('./logger');
+const { getDataPath } = require('./runtime-paths');
 
 const TELEGRAM_API_BASE_URL = 'https://api.telegram.org';
 const TELEGRAM_POLL_TIMEOUT_SECONDS = 25;
 const TELEGRAM_RETRY_DELAY_MS = 3_000;
+const TELEGRAM_STATE_FILE_PATH = getDataPath('telegram-state.json');
 
 function getGlobalFetch() {
   if (typeof fetch === 'function') {
@@ -19,6 +23,7 @@ function createTelegramBridge(token) {
     return {
       isEnabled: false,
       getKnownChatIds: () => [],
+      rememberChatIds: () => [],
       sendMessageToChat: async () => false,
       sendMessageToKnownChats: async () => [],
       start: () => () => {},
@@ -26,10 +31,36 @@ function createTelegramBridge(token) {
   }
 
   const fetchImpl = getGlobalFetch();
-  const knownChatIds = new Set();
-  let offset = 0;
+  const persistedState = readTelegramState();
+  const knownChatIds = new Set(persistedState.knownChatIds);
+  let offset = persistedState.offset;
   let stopRequested = false;
   let activeTimeout = null;
+
+  function persistState() {
+    try {
+      fs.mkdirSync(path.dirname(TELEGRAM_STATE_FILE_PATH), { recursive: true });
+      fs.writeFileSync(
+        TELEGRAM_STATE_FILE_PATH,
+        JSON.stringify(
+          {
+            knownChatIds: [...knownChatIds],
+            offset,
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      );
+    } catch (error) {
+      logTaskEvent('telegram_state_persist_error', {
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to persist Telegram bridge state.',
+      });
+    }
+  }
 
   async function callTelegramApi(method, payload) {
     const response = await fetchImpl(
@@ -69,6 +100,7 @@ function createTelegramBridge(token) {
     });
 
     knownChatIds.add(chatId);
+    persistState();
     return true;
   }
 
@@ -90,6 +122,32 @@ function createTelegramBridge(token) {
     }
 
     return deliveries;
+  }
+
+  function rememberChatIds(chatIds) {
+    let addedCount = 0;
+
+    for (const chatId of Array.isArray(chatIds) ? chatIds : [chatIds]) {
+      const normalizedChatId =
+        typeof chatId === 'string' && chatId.trim()
+          ? chatId.trim()
+          : typeof chatId === 'number'
+            ? chatId
+            : null;
+
+      if (normalizedChatId === null || knownChatIds.has(normalizedChatId)) {
+        continue;
+      }
+
+      knownChatIds.add(normalizedChatId);
+      addedCount += 1;
+    }
+
+    if (addedCount > 0) {
+      persistState();
+    }
+
+    return [...knownChatIds];
   }
 
   function scheduleNextPoll(onMessage, delayMs = 0) {
@@ -125,6 +183,7 @@ function createTelegramBridge(token) {
         }
 
         knownChatIds.add(chatId);
+        persistState();
         await onMessage({
           chatId,
           text: text.trim(),
@@ -171,10 +230,47 @@ function createTelegramBridge(token) {
   return {
     isEnabled: true,
     getKnownChatIds: () => [...knownChatIds],
+    rememberChatIds,
     sendMessageToChat,
     sendMessageToKnownChats,
     start,
   };
+}
+
+function normalizeTelegramState(rawState) {
+  if (!rawState || typeof rawState !== 'object') {
+    return {
+      knownChatIds: [],
+      offset: 0,
+    };
+  }
+
+  const knownChatIds = Array.isArray(rawState.knownChatIds)
+    ? rawState.knownChatIds.filter(
+        (chatId) =>
+          (typeof chatId === 'string' && chatId.trim()) || typeof chatId === 'number',
+      )
+    : [];
+  const offset = Number.isFinite(rawState.offset) && rawState.offset > 0
+    ? rawState.offset
+    : 0;
+
+  return {
+    knownChatIds,
+    offset,
+  };
+}
+
+function readTelegramState() {
+  try {
+    const rawContent = fs.readFileSync(TELEGRAM_STATE_FILE_PATH, 'utf8');
+    return normalizeTelegramState(JSON.parse(rawContent));
+  } catch (_error) {
+    return {
+      knownChatIds: [],
+      offset: 0,
+    };
+  }
 }
 
 module.exports = {

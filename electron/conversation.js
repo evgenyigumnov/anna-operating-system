@@ -14,6 +14,12 @@ function broadcastConversationMessage(message) {
       typeof message.createdAt === 'string' && message.createdAt.trim()
         ? message.createdAt
         : new Date().toISOString(),
+    ...(typeof message.chatId === 'string' && message.chatId.trim()
+      ? { chatId: message.chatId.trim() }
+      : typeof message.chatId === 'number'
+        ? { chatId: message.chatId }
+        : {}),
+    ...(message.source === 'telegram' ? { source: 'telegram' } : {}),
   };
 
   let deliveredWindowCount = 0;
