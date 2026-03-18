@@ -19,3 +19,5 @@
    -  [ ]  News settings
    -  [ ]  RAG settings (point important folders with documents)
 - [x] Telegram integration
+  - [ ] `/clear` command
+  - [ ] sendMessageDraft for streaming message by chunks
