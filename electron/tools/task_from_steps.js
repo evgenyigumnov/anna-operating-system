@@ -71,7 +71,7 @@ module.exports = {
               ? `Previous runs of this task have already done the following:\n${normalizedHistory.map((step, index) => `${index + 1}. ${step}`).join('\n')}`
               : 'Previous runs of this task have not completed any steps yet.',
           'If the task requires an exact silence token such as "KEEP_SILENCE", preserve it exactly and return only that token with no extra text.',
-          'Work step by step, call multiple different tools if needed, and in the end return only the task result and a brief list of the steps actually performed.',
+          'Work step by step, call multiple different tools if needed, and in the end return only the task result.',
         ].join('\n\n'),
       },
     ];

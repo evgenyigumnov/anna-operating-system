@@ -11,7 +11,7 @@ const {
   logUserMessage,
 } = require('./logger');
 
-const OPENAPI_MODEL = 'gpt-oss:120b-cloud';
+const OPENAPI_MODEL = 'glm-5:cloud';
 
 const DEFAULT_SYSTEM_PROMPT =
   'Format every final answer as Markdown. Use tools when they are relevant.';
