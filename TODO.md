@@ -9,11 +9,11 @@
 
 ## Features
 - Step by step wizard for new users in first time startup application
-   -  [x]  Specify IDENTITY.md
    -  [ ]  Telegram settings
    -  [ ]  Brave settings
    -  [ ]  Google Calendar settings
-   -  [ ]  Mail settings
+   -  [ ]  Mail settings (imap)
+   -  [ ]  New mail rules if imap is enabled
    -  [ ]  News settings
    -  [ ]  RAG settings (point important folders with documents)
 - Telegram integration
