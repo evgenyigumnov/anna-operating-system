@@ -88,6 +88,76 @@ function loadMarkdownFile(fileName) {
   }
 }
 
+function parseMarkdownSections(markdown) {
+  const sections = [];
+  let currentSection = null;
+
+  for (const line of String(markdown || '').split(/\r?\n/)) {
+    const headingMatch = line.match(/^#{1,6}\s+(.+?)\s*$/);
+
+    if (headingMatch) {
+      currentSection = {
+        title: headingMatch[1].trim(),
+        lines: [],
+      };
+      sections.push(currentSection);
+      continue;
+    }
+
+    if (currentSection) {
+      currentSection.lines.push(line);
+    }
+  }
+
+  return sections;
+}
+
+function normalizeSectionLines(lines) {
+  const normalizedLines = Array.isArray(lines)
+    ? lines.map((line) => String(line || '').trimEnd())
+    : [];
+
+  while (normalizedLines.length && !normalizedLines[0].trim()) {
+    normalizedLines.shift();
+  }
+
+  while (
+    normalizedLines.length &&
+    (!normalizedLines.at(-1).trim() || normalizedLines.at(-1).trim() === '```')
+  ) {
+    normalizedLines.pop();
+  }
+
+  return normalizedLines.filter((line) => line.trim() !== '```');
+}
+
+function appendMarkdownSections(promptLines, sectionTitle, markdown) {
+  const sections = parseMarkdownSections(markdown);
+
+  if (!sections.length) {
+    return;
+  }
+
+  promptLines.push('');
+  promptLines.push(sectionTitle);
+
+  for (const section of sections) {
+    const contentLines = normalizeSectionLines(section.lines);
+
+    if (!contentLines.length) {
+      continue;
+    }
+
+    if (contentLines.length === 1) {
+      promptLines.push(`${section.title}: ${contentLines[0]}`);
+      continue;
+    }
+
+    promptLines.push(`${section.title}:`);
+    promptLines.push(...contentLines);
+  }
+}
+
 function buildIdentityPrompt(identity) {
   const normalizedIdentity = {
     ...DEFAULT_IDENTITY,
@@ -116,18 +186,14 @@ function buildIdentityPrompt(identity) {
   const userMarkdown = loadMarkdownFile('USER.md');
 
   if (userMarkdown) {
-    promptLines.push('');
-    promptLines.push('User profile config:');
-    promptLines.push(userMarkdown);
+    appendMarkdownSections(promptLines, 'User profile:', userMarkdown);
   }
 
   if (hasImapConfig()) {
     const emailMarkdown = loadMarkdownFile('EMAIL.md');
 
     if (emailMarkdown) {
-      promptLines.push('');
-      promptLines.push('Email rules config:');
-      promptLines.push(emailMarkdown);
+      appendMarkdownSections(promptLines, 'Email rules:', emailMarkdown);
     }
   }
 
