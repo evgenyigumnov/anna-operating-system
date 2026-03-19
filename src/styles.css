@@ -1,7 +1,7 @@
 :root {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  color: #f5efe4;
-  background: #111827;
+  color: #253047;
+  background: #f8f4ec;
   font-size: 14px;
 }
 
@@ -11,6 +11,7 @@
 
 body {
   margin: 0;
+  background: #f8f4ec;
 }
 
 #root {
@@ -23,8 +24,8 @@ button {
   padding: 18px 24px;
   font: inherit;
   font-weight: 600;
-  color: #111827;
-  background: #f4b942;
+  color: #fffafc;
+  background: #de7fa6;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -38,7 +39,7 @@ button:disabled {
 
 button:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(244, 185, 66, 0.24);
+  box-shadow: 0 12px 28px rgba(222, 127, 166, 0.28);
 }
 
 .app {
@@ -47,8 +48,9 @@ button:hover {
   place-items: start center;
   padding: 32px;
   background:
-    radial-gradient(circle at top, rgba(244, 185, 66, 0.25), transparent 35%),
-    linear-gradient(180deg, #1f2937, #0f172a);
+    radial-gradient(circle at top, rgba(244, 199, 140, 0.38), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(255, 230, 209, 0.72), transparent 30%),
+    linear-gradient(180deg, #fcfaf6, #f3ede3);
 }
 
 .card {
@@ -58,8 +60,10 @@ button:hover {
   margin-top: 6vh;
   padding: 42px 36px;
   border-radius: 28px;
-  background: rgba(17, 24, 39, 0.86);
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(214, 194, 170, 0.7);
+  background: rgba(255, 251, 245, 0.92);
+  box-shadow: 0 24px 70px rgba(149, 120, 84, 0.14);
+  backdrop-filter: blur(10px);
 }
 
 .card--compact {
@@ -72,6 +76,7 @@ button:hover {
   font-size: 2.6rem;
   line-height: 1.2;
   text-align: center;
+  color: #213047;
 }
 
 .conversation {
@@ -81,7 +86,8 @@ button:hover {
   padding: 18px 20px;
   line-height: 1.5;
   border-radius: 16px;
-  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(223, 208, 190, 0.85);
+  background: rgba(248, 242, 234, 0.92);
   overflow-y: auto;
 }
 
@@ -90,7 +96,8 @@ button:hover {
   word-break: break-word;
   padding: 14px 16px;
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(228, 214, 197, 0.85);
+  background: #fffdfa;
 }
 
 .conversation-line + .conversation-line {
@@ -98,11 +105,12 @@ button:hover {
 }
 
 .conversation-line--user {
-  background: rgba(51, 65, 85, 0.7);
+  border-color: rgba(238, 196, 214, 0.95);
+  background: #fff1f7;
 }
 
 .conversation-line--assistant .conversation-author {
-  color: #f4b942;
+  color: #c85a88;
 }
 
 .conversation-author {
@@ -140,7 +148,7 @@ button:hover {
 .conversation-content code {
   padding: 0.12em 0.35em;
   border-radius: 6px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(231, 222, 211, 0.92);
   font-size: 0.92em;
 }
 
@@ -148,7 +156,8 @@ button:hover {
   overflow-x: auto;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(2, 6, 23, 0.95);
+  border: 1px solid rgba(223, 208, 190, 0.9);
+  background: #f4ede3;
 }
 
 .conversation-content pre code {
@@ -158,12 +167,12 @@ button:hover {
 
 .conversation-content blockquote {
   padding-left: 14px;
-  border-left: 3px solid rgba(244, 185, 66, 0.7);
-  color: rgba(245, 239, 228, 0.86);
+  border-left: 3px solid rgba(222, 127, 166, 0.7);
+  color: #566277;
 }
 
 .conversation-content a {
-  color: #f4b942;
+  color: #bb4f81;
 }
 
 .conversation-content table {
@@ -174,13 +183,13 @@ button:hover {
 .conversation-content th,
 .conversation-content td {
   padding: 10px 12px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
+  border: 1px solid rgba(210, 195, 178, 0.7);
   text-align: left;
 }
 
 .conversation-placeholder {
   margin: 0;
-  color: rgba(245, 239, 228, 0.72);
+  color: #7f8b9f;
 }
 
 .message-input {
@@ -190,9 +199,23 @@ button:hover {
   padding: 18px 20px;
   font: inherit;
   color: inherit;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(210, 195, 178, 0.9);
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(255, 253, 249, 0.98);
+}
+
+.message-input::placeholder,
+.wizard-input::placeholder,
+.wizard-textarea::placeholder {
+  color: #95a0b1;
+}
+
+.message-input:focus,
+.wizard-input:focus,
+.wizard-textarea:focus {
+  outline: 2px solid rgba(222, 127, 166, 0.24);
+  outline-offset: 0;
+  border-color: rgba(222, 127, 166, 0.78);
 }
 
 .actions {
@@ -202,12 +225,12 @@ button:hover {
 }
 
 .secondary-button {
-  color: #f5efe4;
-  background: rgba(71, 85, 105, 0.9);
+  color: #334155;
+  background: rgba(233, 226, 217, 0.96);
 }
 
 .secondary-button:hover {
-  box-shadow: 0 10px 24px rgba(71, 85, 105, 0.24);
+  box-shadow: 0 12px 28px rgba(148, 120, 97, 0.18);
 }
 
 .wizard-card {
@@ -223,7 +246,7 @@ button:hover {
 .wizard-progress,
 .wizard-step-label {
   margin: 0;
-  color: rgba(245, 239, 228, 0.72);
+  color: #7f8b9f;
 }
 
 .wizard-step {
@@ -253,9 +276,9 @@ button:hover {
   padding: 18px 20px;
   font: inherit;
   color: inherit;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(210, 195, 178, 0.9);
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(255, 253, 249, 0.98);
 }
 
 .wizard-textarea {
@@ -280,6 +303,7 @@ button:hover {
   margin: 0;
   padding: 14px 16px;
   border-radius: 14px;
-  color: #fecaca;
-  background: rgba(127, 29, 29, 0.45);
+  border: 1px solid rgba(233, 176, 176, 0.75);
+  color: #9f2f2f;
+  background: rgba(252, 233, 233, 0.95);
 }
