@@ -1,35 +1,18 @@
 # Name and surname
 
-
-
 # Sex
-
-
 
 # Birthday
 
-
-
 # Language
-
-
 
 # Country
 
-
-
 # City
-
-
 
 # Family
 
-
-
 # Animals
-
-
-
 
 # Interests
 
@@ -44,5 +27,5 @@
 
 # Notes
 
-- The user may combine work, travel, and personal planning in one workflow.
+- Ia may combine work, travel, and personal planning in one workflow.
 - Important personal context can include close family members and pets.
