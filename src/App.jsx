@@ -3,15 +3,30 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   EMAIL_SETTINGS_DEFAULTS,
+  IDENTITY_PROFILE_DEFAULTS,
+  buildIdentityMarkdown,
   USER_PROFILE_DEFAULTS,
   buildUserMarkdown,
   getDefaultEmailMarkdown,
+  parseIdentityMarkdown,
   parseUserMarkdown,
 } from './wizard/defaults';
 
 const STORAGE_KEY = 'assistant-conversation-history';
 const DEFAULT_ASSISTANT_NAME = 'Анна';
 const wizardStepLoaders = import.meta.glob('./wizard/steps/*.jsx');
+const POPULAR_IDENTITY_LANGUAGES = new Set([
+  'English',
+  'Spanish',
+  'French',
+  'German',
+  'Portuguese',
+  'Russian',
+  'Arabic',
+  'Hindi',
+  'Chinese',
+  'Japanese',
+]);
 
 function appendConversationEntry(currentConversation, nextEntry) {
   return [...currentConversation, nextEntry];
@@ -150,7 +165,15 @@ function App() {
   const [isWizardSaving, setIsWizardSaving] = useState(false);
   const [isFirstLaunch, setIsFirstLaunch] = useState(false);
   const [formData, setFormData] = useState({
-    identityMarkdown: '',
+    identityMarkdown: buildIdentityMarkdown(IDENTITY_PROFILE_DEFAULTS),
+    identityName: IDENTITY_PROFILE_DEFAULTS.name,
+    identitySex: IDENTITY_PROFILE_DEFAULTS.sex,
+    identityLanguage: IDENTITY_PROFILE_DEFAULTS.language,
+    identityLanguagePreset: IDENTITY_PROFILE_DEFAULTS.language,
+    identityLanguageCustom: '',
+    identityStyle: IDENTITY_PROFILE_DEFAULTS.style,
+    identityRules: IDENTITY_PROFILE_DEFAULTS.rules,
+    identityOperatingSystem: IDENTITY_PROFILE_DEFAULTS.operatingSystem,
     userMarkdown: buildUserMarkdown(USER_PROFILE_DEFAULTS),
     userFullName: USER_PROFILE_DEFAULTS.fullName,
     userSex: USER_PROFILE_DEFAULTS.sex,
@@ -186,9 +209,10 @@ function App() {
       window.appControls.getIdentity(),
       window.appControls.getSetupState(),
       window.appControls.getConversationHistory(),
+      window.appControls.getSystemInfo().catch(() => ''),
       loadWizardSteps(),
     ])
-      .then(([identity, setupState, storedConversation, steps]) => {
+      .then(([identity, setupState, storedConversation, systemInfo, steps]) => {
         if (!isMounted) {
           return;
         }
@@ -198,6 +222,19 @@ function App() {
           ? storedConversation
           : [];
         const localConversation = loadConversation();
+        const identityProfile = parseIdentityMarkdown(setupState?.identityMarkdown || '');
+        const detectedOperatingSystem =
+          String(systemInfo || '').trim() ||
+          identityProfile.operatingSystem ||
+          IDENTITY_PROFILE_DEFAULTS.operatingSystem;
+        const normalizedIdentityLanguage = String(identityProfile.language || '').trim();
+        const identityLanguagePreset = POPULAR_IDENTITY_LANGUAGES.has(
+          normalizedIdentityLanguage,
+        )
+          ? normalizedIdentityLanguage
+          : 'custom';
+        const identityLanguageCustom =
+          identityLanguagePreset === 'custom' ? normalizedIdentityLanguage : '';
         const userProfile = parseUserMarkdown(setupState?.userMarkdown || '');
         const userMarkdown = buildUserMarkdown(userProfile);
         const emailMarkdown =
@@ -206,7 +243,18 @@ function App() {
         setAssistantName(nextAssistantName);
         setIsFirstLaunch(Boolean(setupState?.isFirstLaunch));
         setFormData({
-          identityMarkdown: setupState?.identityMarkdown || '',
+          identityMarkdown: buildIdentityMarkdown({
+            ...identityProfile,
+            operatingSystem: detectedOperatingSystem,
+          }),
+          identityName: identityProfile.name,
+          identitySex: identityProfile.sex,
+          identityLanguage: normalizedIdentityLanguage,
+          identityLanguagePreset,
+          identityLanguageCustom,
+          identityStyle: identityProfile.style,
+          identityRules: identityProfile.rules,
+          identityOperatingSystem: detectedOperatingSystem,
           userMarkdown,
           userFullName: userProfile.fullName,
           userSex: userProfile.sex,

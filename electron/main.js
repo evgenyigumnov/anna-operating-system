@@ -1,6 +1,7 @@
 const path = require('path');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { loadIdentity } = require('./identity');
+const { getSystemInfo } = require('./system-info');
 const { runInferenceSession } = require('./openai');
 const { startHooks } = require('./hook-runner');
 const {
@@ -101,6 +102,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('app:get-identity', () => loadIdentity());
+  ipcMain.handle('app:get-system-info', () => getSystemInfo());
   ipcMain.handle('app:get-setup-state', () => getSetupState());
   ipcMain.handle('app:get-conversation-history', () => readConversationHistory());
   ipcMain.handle('app:sync-conversation-history', (_event, conversation) =>

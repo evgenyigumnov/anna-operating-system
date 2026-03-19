@@ -263,6 +263,14 @@ button:hover {
   min-height: 320px;
 }
 
+.wizard-textarea--compact {
+  min-height: 120px;
+}
+
+.wizard-textarea--preview {
+  min-height: 320px;
+}
+
 .wizard-error {
   margin: 0;
   padding: 14px 16px;

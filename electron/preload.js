@@ -5,6 +5,7 @@ const CONVERSATION_MESSAGE_CHANNEL = 'app:conversation-message';
 contextBridge.exposeInMainWorld('appControls', {
   quit: () => ipcRenderer.invoke('app:quit'),
   getIdentity: () => ipcRenderer.invoke('app:get-identity'),
+  getSystemInfo: () => ipcRenderer.invoke('app:get-system-info'),
   getSetupState: () => ipcRenderer.invoke('app:get-setup-state'),
   getConversationHistory: () => ipcRenderer.invoke('app:get-conversation-history'),
   syncConversationHistory: (conversation) =>

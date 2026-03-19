@@ -1,3 +1,22 @@
+const IDENTITY_PROFILE_DEFAULTS = {
+  name: 'Anna',
+  sex: 'Female',
+  language: 'English',
+  style: 'Simple, concise, and with a sense of humor.',
+  rules:
+    '- If a user asks about your capabilities, explain them in general terms without using programming jargon.\n- If a user asks about a specific tool, explain how to use it in general terms and provide examples.',
+  operatingSystem: '',
+};
+
+const IDENTITY_SECTION_ORDER = [
+  ['Name', 'name'],
+  ['Sex', 'sex'],
+  ['Language', 'language'],
+  ['Style', 'style'],
+  ['Rules', 'rules'],
+  ['Operating System', 'operatingSystem'],
+];
+
 const USER_PROFILE_DEFAULTS = {
   fullName: '',
   sex: 'Male',
@@ -39,6 +58,50 @@ export const EMAIL_SETTINGS_DEFAULTS = {
   emailSmtpUser: '',
   emailSmtpPassword: '',
 };
+
+export function buildIdentityMarkdown(identityProfile) {
+  return IDENTITY_SECTION_ORDER.map(([title, key]) => {
+    const value = String(identityProfile?.[key] ?? '').trim();
+    return `# ${title}\n\n${value}`;
+  }).join('\n\n');
+}
+
+export function parseIdentityMarkdown(markdown) {
+  const normalizedMarkdown = String(markdown || '').trim();
+
+  if (!normalizedMarkdown) {
+    return { ...IDENTITY_PROFILE_DEFAULTS };
+  }
+
+  const matches = [...normalizedMarkdown.matchAll(/^# (.+)\n\n([\s\S]*?)(?=^# |\s*$)/gm)];
+  const sections = Object.fromEntries(
+    matches.map(([, title, value]) => [title.trim().toLowerCase(), value.trim()]),
+  );
+
+  const resolveSectionValue = (aliases, fallback) => {
+    const matchedAlias = aliases.find((alias) => {
+      const value = sections[alias];
+      return typeof value === 'string' && value.trim();
+    });
+
+    return matchedAlias ? sections[matchedAlias].trim() : fallback;
+  };
+
+  return {
+    name: resolveSectionValue(['name'], IDENTITY_PROFILE_DEFAULTS.name),
+    sex: resolveSectionValue(['sex', 'gender'], IDENTITY_PROFILE_DEFAULTS.sex),
+    language: resolveSectionValue(
+      ['language', 'locale'],
+      IDENTITY_PROFILE_DEFAULTS.language,
+    ),
+    style: resolveSectionValue(['style'], IDENTITY_PROFILE_DEFAULTS.style),
+    rules: resolveSectionValue(['rules'], IDENTITY_PROFILE_DEFAULTS.rules),
+    operatingSystem: resolveSectionValue(
+      ['operating system', 'os'],
+      IDENTITY_PROFILE_DEFAULTS.operatingSystem,
+    ),
+  };
+}
 
 export function buildUserMarkdown(userProfile) {
   return USER_SECTION_ORDER.map(([title, key]) => {
@@ -105,4 +168,4 @@ ${normalizedUserName}
 \`\`\``;
 }
 
-export { USER_PROFILE_DEFAULTS };
+export { IDENTITY_PROFILE_DEFAULTS, USER_PROFILE_DEFAULTS };
