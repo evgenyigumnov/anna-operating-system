@@ -175,7 +175,7 @@ function UserStep({ formData, onChange }) {
           onChange={(event) =>
             updateUserField(formData, onChange, 'userCountry', event.target.value)
           }
-          placeholder="Kazakhstan"
+          placeholder="USA"
           required
         />
       </label>
@@ -188,7 +188,7 @@ function UserStep({ formData, onChange }) {
           onChange={(event) =>
             updateUserField(formData, onChange, 'userCity', event.target.value)
           }
-          placeholder="Astana"
+          placeholder="New York City"
           required
         />
       </label>
