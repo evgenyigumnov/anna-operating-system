@@ -28,6 +28,19 @@ const POPULAR_IDENTITY_LANGUAGES = new Set([
   'Japanese',
 ]);
 
+function getLanguageSelection(language, popularLanguages) {
+  const normalizedLanguage = String(language || '').trim();
+  const preset = popularLanguages.has(normalizedLanguage)
+    ? normalizedLanguage
+    : 'custom';
+
+  return {
+    language: normalizedLanguage,
+    preset,
+    custom: preset === 'custom' ? normalizedLanguage : '',
+  };
+}
+
 function appendConversationEntry(currentConversation, nextEntry) {
   return [...currentConversation, nextEntry];
 }
@@ -179,6 +192,8 @@ function App() {
     userSex: USER_PROFILE_DEFAULTS.sex,
     userBirthday: USER_PROFILE_DEFAULTS.birthday,
     userLanguage: USER_PROFILE_DEFAULTS.language,
+    userLanguagePreset: USER_PROFILE_DEFAULTS.language,
+    userLanguageCustom: '',
     userCountry: USER_PROFILE_DEFAULTS.country,
     userCity: USER_PROFILE_DEFAULTS.city,
     userFamily: USER_PROFILE_DEFAULTS.family,
@@ -227,16 +242,27 @@ function App() {
           String(systemInfo || '').trim() ||
           identityProfile.operatingSystem ||
           IDENTITY_PROFILE_DEFAULTS.operatingSystem;
-        const normalizedIdentityLanguage = String(identityProfile.language || '').trim();
-        const identityLanguagePreset = POPULAR_IDENTITY_LANGUAGES.has(
-          normalizedIdentityLanguage,
-        )
-          ? normalizedIdentityLanguage
-          : 'custom';
-        const identityLanguageCustom =
-          identityLanguagePreset === 'custom' ? normalizedIdentityLanguage : '';
+        const identityLanguageSelection = getLanguageSelection(
+          identityProfile.language,
+          POPULAR_IDENTITY_LANGUAGES,
+        );
         const userProfile = parseUserMarkdown(setupState?.userMarkdown || '');
         const userMarkdown = buildUserMarkdown(userProfile);
+        const userLanguageSelection = getLanguageSelection(
+          userProfile.language,
+          new Set([
+            'English',
+            'Español',
+            'Français',
+            'Deutsch',
+            'Português',
+            'Русский',
+            'العربية',
+            'हिन्दी',
+            '中文',
+            '日本語',
+          ]),
+        );
         const emailMarkdown =
           setupState?.emailMarkdown || getDefaultEmailMarkdown(userProfile.fullName);
 
@@ -249,9 +275,9 @@ function App() {
           }),
           identityName: identityProfile.name,
           identitySex: identityProfile.sex,
-          identityLanguage: normalizedIdentityLanguage,
-          identityLanguagePreset,
-          identityLanguageCustom,
+          identityLanguage: identityLanguageSelection.language,
+          identityLanguagePreset: identityLanguageSelection.preset,
+          identityLanguageCustom: identityLanguageSelection.custom,
           identityStyle: identityProfile.style,
           identityRules: identityProfile.rules,
           identityOperatingSystem: detectedOperatingSystem,
@@ -259,7 +285,9 @@ function App() {
           userFullName: userProfile.fullName,
           userSex: userProfile.sex,
           userBirthday: userProfile.birthday,
-          userLanguage: userProfile.language,
+          userLanguage: userLanguageSelection.language,
+          userLanguagePreset: userLanguageSelection.preset,
+          userLanguageCustom: userLanguageSelection.custom,
           userCountry: userProfile.country,
           userCity: userProfile.city,
           userFamily: userProfile.family,

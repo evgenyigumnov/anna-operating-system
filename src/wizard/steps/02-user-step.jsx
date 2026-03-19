@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { buildUserMarkdown, parseUserMarkdown } from '../defaults';
+import { buildUserMarkdown } from '../defaults';
 
 const POPULAR_LANGUAGES = [
   'English',
@@ -84,84 +83,6 @@ function handleCustomLanguageChange(formData, onChange, value) {
 }
 
 function UserStep({ formData, onChange }) {
-  useEffect(() => {
-    const parsedUser = parseUserMarkdown(formData.userMarkdown);
-    const normalizedLanguage = String(parsedUser.language || '').trim();
-    const nextLanguagePreset = POPULAR_LANGUAGES.includes(normalizedLanguage)
-      ? normalizedLanguage
-      : 'custom';
-    const nextLanguageCustom =
-      nextLanguagePreset === 'custom' ? normalizedLanguage : '';
-
-    if (formData.userFullName !== parsedUser.fullName) {
-      onChange('userFullName', parsedUser.fullName);
-    }
-
-    if (formData.userSex !== parsedUser.sex) {
-      onChange('userSex', parsedUser.sex);
-    }
-
-    if (formData.userBirthday !== parsedUser.birthday) {
-      onChange('userBirthday', parsedUser.birthday);
-    }
-
-    if (formData.userLanguage !== normalizedLanguage) {
-      onChange('userLanguage', normalizedLanguage);
-    }
-
-    if (formData.userLanguagePreset !== nextLanguagePreset) {
-      onChange('userLanguagePreset', nextLanguagePreset);
-    }
-
-    if (formData.userLanguageCustom !== nextLanguageCustom) {
-      onChange('userLanguageCustom', nextLanguageCustom);
-    }
-
-    if (formData.userCountry !== parsedUser.country) {
-      onChange('userCountry', parsedUser.country);
-    }
-
-    if (formData.userCity !== parsedUser.city) {
-      onChange('userCity', parsedUser.city);
-    }
-
-    if (formData.userFamily !== parsedUser.family) {
-      onChange('userFamily', parsedUser.family);
-    }
-
-    if (formData.userAnimals !== parsedUser.animals) {
-      onChange('userAnimals', parsedUser.animals);
-    }
-
-    if (formData.userInterests !== parsedUser.interests) {
-      onChange('userInterests', parsedUser.interests);
-    }
-
-    if (formData.userRules !== parsedUser.rules) {
-      onChange('userRules', parsedUser.rules);
-    }
-
-    if (formData.userNotes !== parsedUser.notes) {
-      onChange('userNotes', parsedUser.notes);
-    }
-  }, [
-    formData.userAnimals,
-    formData.userBirthday,
-    formData.userCity,
-    formData.userCountry,
-    formData.userFamily,
-    formData.userFullName,
-    formData.userInterests,
-    formData.userLanguage,
-    formData.userLanguageCustom,
-    formData.userLanguagePreset,
-    formData.userMarkdown,
-    formData.userNotes,
-    formData.userRules,
-    formData.userSex,
-    onChange,
-  ]);
-
   const languagePresetValue = getLanguagePresetValue(formData);
 
   return (

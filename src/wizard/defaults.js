@@ -97,29 +97,26 @@ export function parseIdentityMarkdown(markdown) {
   }
 
   const sections = parseMarkdownSections(normalizedMarkdown);
+  const resolveSectionValue = (aliases, fallback = '') => {
+    const matchedAlias = aliases.find((alias) =>
+      Object.prototype.hasOwnProperty.call(sections, alias),
+    );
 
-  const resolveSectionValue = (aliases, fallback) => {
-    const matchedAlias = aliases.find((alias) => {
-      const value = sections[alias];
-      return typeof value === 'string' && value.trim();
-    });
+    if (!matchedAlias) {
+      return fallback;
+    }
 
-    return matchedAlias ? sections[matchedAlias].trim() : fallback;
+    const value = sections[matchedAlias];
+    return typeof value === 'string' ? value.trim() : fallback;
   };
 
   return {
-    name: resolveSectionValue(['name'], IDENTITY_PROFILE_DEFAULTS.name),
-    sex: resolveSectionValue(['sex', 'gender'], IDENTITY_PROFILE_DEFAULTS.sex),
-    language: resolveSectionValue(
-      ['language', 'locale'],
-      IDENTITY_PROFILE_DEFAULTS.language,
-    ),
-    style: resolveSectionValue(['style'], IDENTITY_PROFILE_DEFAULTS.style),
-    rules: resolveSectionValue(['rules'], IDENTITY_PROFILE_DEFAULTS.rules),
-    operatingSystem: resolveSectionValue(
-      ['operating system', 'os'],
-      IDENTITY_PROFILE_DEFAULTS.operatingSystem,
-    ),
+    name: resolveSectionValue(['name']),
+    sex: resolveSectionValue(['sex', 'gender']),
+    language: resolveSectionValue(['language', 'locale']),
+    style: resolveSectionValue(['style']),
+    rules: resolveSectionValue(['rules']),
+    operatingSystem: resolveSectionValue(['operating system', 'os']),
   };
 }
 
@@ -144,10 +141,7 @@ export function parseUserMarkdown(markdown) {
   return USER_SECTION_ORDER.reduce((result, [title, key]) => {
     const sectionValue = sections[title.toLowerCase()];
 
-    result[key] =
-      typeof sectionValue === 'string' && sectionValue.trim()
-        ? sectionValue.trim()
-        : USER_PROFILE_DEFAULTS[key];
+    result[key] = typeof sectionValue === 'string' ? sectionValue.trim() : '';
 
     return result;
   }, {});

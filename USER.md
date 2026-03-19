@@ -27,5 +27,5 @@
 
 # Notes
 
-- Ia may combine work, travel, and personal planning in one workflow.
+- I may combine work, travel, and personal planning in one workflow.
 - Important personal context can include close family members and pets.
