@@ -264,8 +264,13 @@ button:hover {
 }
 
 .wizard-textarea--compact {
-  min-height: 120px;
+  min-height: 80px;
 }
+
+.wizard-textarea--small {
+  min-height: 40px;
+}
+
 
 .wizard-textarea--preview {
   min-height: 320px;

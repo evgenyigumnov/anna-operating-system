@@ -2,15 +2,15 @@ import { buildIdentityMarkdown } from '../defaults';
 
 const POPULAR_LANGUAGES = [
   'English',
-  'Spanish',
-  'French',
-  'German',
-  'Portuguese',
-  'Russian',
-  'Arabic',
-  'Hindi',
-  'Chinese',
-  'Japanese',
+  'Español',
+  'Français',
+  'Deutsch',
+  'Português',
+  'Русский',
+  'العربية',
+  'हिन्दी',
+  '中文',
+  '日本語',
 ];
 
 const REQUIRED_FIELDS = [
@@ -133,12 +133,12 @@ function IdentityStep({ formData, onChange }) {
       <label className="wizard-field">
         <span>Communication style</span>
         <textarea
-          className="wizard-textarea wizard-textarea--compact"
+          className="wizard-textarea wizard-textarea--small"
           value={formData.identityStyle}
           onChange={(event) =>
             updateIdentityField(formData, onChange, 'identityStyle', event.target.value)
           }
-          rows="1"
+          rows="2"
           placeholder="Simple, concise, and with a sense of humor."
           required
         />
@@ -151,7 +151,7 @@ function IdentityStep({ formData, onChange }) {
           onChange={(event) =>
             updateIdentityField(formData, onChange, 'identityRules', event.target.value)
           }
-          rows="6"
+          rows="4"
           placeholder="- Explain capabilities in plain language.&#10;- Provide examples when needed."
         />
       </label>
