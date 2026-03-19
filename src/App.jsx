@@ -592,7 +592,6 @@ function App() {
       <main className="app">
         <section className="card wizard-card">
           <div className="wizard-header">
-            <h1>Application setup wizard</h1>
             <p className="wizard-progress">
               Step {wizardStepIndex + 1} of {visibleWizardSteps.length || 1}
             </p>

@@ -138,7 +138,7 @@ function IdentityStep({ formData, onChange }) {
           onChange={(event) =>
             updateIdentityField(formData, onChange, 'identityStyle', event.target.value)
           }
-          rows="4"
+          rows="1"
           placeholder="Simple, concise, and with a sense of humor."
           required
         />
