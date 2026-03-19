@@ -195,69 +195,75 @@ function UserStep({ formData, onChange }) {
           />
         </label>
       ) : null}
-      <label className="wizard-field">
-        <span>Family</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.userFamily}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userFamily', event.target.value)
-          }
-          placeholder="Married. Wife: Jane. Daughter: Emma."
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Animals</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.userAnimals}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userAnimals', event.target.value)
-          }
-          placeholder="Cat: Khaleesi. Dog: Archie."
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Interests</span>
-        <textarea
-          className="wizard-textarea wizard-textarea--small"
-          value={formData.userInterests}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userInterests', event.target.value)
-          }
-          rows="2"
-          placeholder="- Software development&#10;- Reading&#10;- Traveling"
-          required
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Rules</span>
-        <textarea
-          className="wizard-textarea wizard-textarea--small"
-          value={formData.userRules}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userRules', event.target.value)
-          }
-          rows="2"
-          placeholder="- Be direct and stay on topic.&#10;- Remind about important deadlines."
-          required
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Notes</span>
-        <textarea
-          className="wizard-textarea wizard-textarea--small"
-          value={formData.userNotes}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userNotes', event.target.value)
-          }
-          rows="2"
-          placeholder="- The user often works on technical and product tasks."
-          required
-        />
-      </label>
+      <div className="wizard-field-grid wizard-field-grid--halves">
+        <label className="wizard-field">
+          <span>Family</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userFamily}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userFamily', event.target.value)
+            }
+            placeholder="Married. Wife: Jane. Daughter: Emma."
+          />
+        </label>
+        <label className="wizard-field">
+          <span>Animals</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userAnimals}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userAnimals', event.target.value)
+            }
+            placeholder="Cat: Khaleesi. Dog: Archie."
+          />
+        </label>
+      </div>
+      <div className="wizard-field-grid wizard-field-grid--profile-details">
+        <label className="wizard-field wizard-field--stack-tall">
+          <span>Interests</span>
+          <textarea
+            className="wizard-textarea wizard-textarea--small"
+            value={formData.userInterests}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userInterests', event.target.value)
+            }
+            rows="2"
+            placeholder="- Software development&#10;- Reading&#10;- Traveling"
+            required
+          />
+        </label>
+        <div className="wizard-field-grid wizard-field-grid--stacked">
+          <label className="wizard-field">
+            <span>Rules</span>
+            <textarea
+              className="wizard-textarea wizard-textarea--small"
+              value={formData.userRules}
+              onChange={(event) =>
+                updateUserField(formData, onChange, 'userRules', event.target.value)
+              }
+              rows="2"
+              placeholder="- Be direct and stay on topic.&#10;- Remind about important deadlines."
+              required
+            />
+          </label>
+          <label className="wizard-field">
+            <span>Notes</span>
+            <textarea
+              className="wizard-textarea wizard-textarea--small"
+              value={formData.userNotes}
+              onChange={(event) =>
+                updateUserField(formData, onChange, 'userNotes', event.target.value)
+              }
+              rows="2"
+              placeholder="- The user often works on technical and product tasks."
+              required
+            />
+          </label>
+        </div>
+      </div>
     </div>
   );
 }

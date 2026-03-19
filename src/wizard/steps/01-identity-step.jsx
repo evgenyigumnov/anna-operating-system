@@ -69,52 +69,54 @@ function IdentityStep({ formData, onChange }) {
       <div className="wizard-step-copy">
         <h2>Configure AI assistant profile</h2>
       </div>
-      <label className="wizard-field">
-        <span>Assistant name</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.identityName}
-          onChange={(event) =>
-            updateIdentityField(formData, onChange, 'identityName', event.target.value)
-          }
-          placeholder="Anna"
-          required
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Sex</span>
-        <select
-          className="wizard-input"
-          value={formData.identitySex}
-          onChange={(event) =>
-            updateIdentityField(formData, onChange, 'identitySex', event.target.value)
-          }
-          required
-        >
-          <option value="Female">Female</option>
-          <option value="Male">Male</option>
-          <option value="Unspecified">Unspecified</option>
-        </select>
-      </label>
-      <label className="wizard-field">
-        <span>Language</span>
-        <select
-          className="wizard-input"
-          value={formData.identityLanguagePreset}
-          onChange={(event) =>
-            handleLanguagePresetChange(formData, onChange, event.target.value)
-          }
-          required
-        >
-          {POPULAR_LANGUAGES.map((language) => (
-            <option key={language} value={language}>
-              {language}
-            </option>
-          ))}
-          <option value="custom">Custom</option>
-        </select>
-      </label>
+      <div className="wizard-field-grid wizard-field-grid--three-equal">
+        <label className="wizard-field">
+          <span>Assistant name</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.identityName}
+            onChange={(event) =>
+              updateIdentityField(formData, onChange, 'identityName', event.target.value)
+            }
+            placeholder="Anna"
+            required
+          />
+        </label>
+        <label className="wizard-field">
+          <span>Sex</span>
+          <select
+            className="wizard-input"
+            value={formData.identitySex}
+            onChange={(event) =>
+              updateIdentityField(formData, onChange, 'identitySex', event.target.value)
+            }
+            required
+          >
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Unspecified">Unspecified</option>
+          </select>
+        </label>
+        <label className="wizard-field">
+          <span>Language</span>
+          <select
+            className="wizard-input"
+            value={formData.identityLanguagePreset}
+            onChange={(event) =>
+              handleLanguagePresetChange(formData, onChange, event.target.value)
+            }
+            required
+          >
+            {POPULAR_LANGUAGES.map((language) => (
+              <option key={language} value={language}>
+                {language}
+              </option>
+            ))}
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+      </div>
       {formData.identityLanguagePreset === 'custom' ? (
         <label className="wizard-field">
           <span>Custom language</span>

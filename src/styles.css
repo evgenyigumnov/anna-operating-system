@@ -279,6 +279,33 @@ button:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.wizard-field-grid--three-equal {
+  grid-template-columns: repeat(3, minmax(0, 30%));
+  justify-content: space-between;
+}
+
+.wizard-field-grid--halves {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wizard-field-grid--profile-details {
+  grid-template-columns: minmax(0, 30%) minmax(0, 70%);
+  align-items: stretch;
+}
+
+.wizard-field-grid--stacked {
+  gap: 16px;
+}
+
+.wizard-field--stack-tall {
+  height: 100%;
+}
+
+.wizard-field--stack-tall .wizard-textarea {
+  min-height: 96px;
+  height: 100%;
+}
+
 .wizard-input,
 .wizard-textarea {
   width: 100%;
@@ -319,6 +346,12 @@ button:hover {
 
 @media (max-width: 900px) {
   .wizard-field-grid--triple {
+    grid-template-columns: 1fr;
+  }
+
+  .wizard-field-grid--three-equal,
+  .wizard-field-grid--halves,
+  .wizard-field-grid--profile-details {
     grid-template-columns: 1fr;
   }
 }
