@@ -161,7 +161,7 @@ function UserStep({ formData, onChange }) {
             onChange={(event) =>
               handleCustomLanguageChange(formData, onChange, event.target.value)
             }
-            placeholder="Russian (native), English (fluent)"
+            placeholder="English"
             required
           />
         </label>

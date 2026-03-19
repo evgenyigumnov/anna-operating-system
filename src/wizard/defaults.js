@@ -19,17 +19,17 @@ const IDENTITY_SECTION_ORDER = [
 
 const USER_PROFILE_DEFAULTS = {
   fullName: '',
-  sex: 'Male',
+  sex: 'Unspecified',
   birthday: '',
-  language: 'Russian (native), English (fluent)',
-  country: 'Kazakhstan',
-  city: 'Astana',
+  language: 'English',
+  country: 'USA',
+  city: 'New York',
   family: '',
   animals: '',
-  interests: '- Software development\n- Reading\n- Traveling',
+  interests: 'Reading\n- Traveling',
   rules: '- Be direct and stay on topic.\n- Do not overload with unnecessary explanations.',
   notes:
-    '- The user often works on technical and product tasks.\n- The user may combine work, travel, and personal planning in one workflow.\n- Important personal context can include close family members and pets.',
+    'I may combine work, travel, and personal planning in one workflow.\n- Important personal context can include close family members and pets.',
 };
 
 const USER_SECTION_ORDER = [
