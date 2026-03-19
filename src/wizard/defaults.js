@@ -66,17 +66,37 @@ export function buildIdentityMarkdown(identityProfile) {
   }).join('\n\n');
 }
 
+function parseMarkdownSections(markdown) {
+  const normalizedMarkdown = String(markdown || '')
+    .replace(/\r\n/g, '\n')
+    .trim();
+
+  if (!normalizedMarkdown) {
+    return {};
+  }
+
+  const chunks = normalizedMarkdown.split(/^# /m).filter(Boolean);
+
+  return Object.fromEntries(
+    chunks.map((chunk) => {
+      const [rawTitle = '', ...restLines] = chunk.split('\n');
+      const value = restLines.join('\n').replace(/^\s*\n/, '').trim();
+
+      return [rawTitle.trim().toLowerCase(), value];
+    }),
+  );
+}
+
 export function parseIdentityMarkdown(markdown) {
-  const normalizedMarkdown = String(markdown || '').trim();
+  const normalizedMarkdown = String(markdown || '')
+    .replace(/\r\n/g, '\n')
+    .trim();
 
   if (!normalizedMarkdown) {
     return { ...IDENTITY_PROFILE_DEFAULTS };
   }
 
-  const matches = [...normalizedMarkdown.matchAll(/^# (.+)\n\n([\s\S]*?)(?=^# |\s*$)/gm)];
-  const sections = Object.fromEntries(
-    matches.map(([, title, value]) => [title.trim().toLowerCase(), value.trim()]),
-  );
+  const sections = parseMarkdownSections(normalizedMarkdown);
 
   const resolveSectionValue = (aliases, fallback) => {
     const matchedAlias = aliases.find((alias) => {
@@ -111,21 +131,22 @@ export function buildUserMarkdown(userProfile) {
 }
 
 export function parseUserMarkdown(markdown) {
-  const normalizedMarkdown = String(markdown || '').trim();
+  const normalizedMarkdown = String(markdown || '')
+    .replace(/\r\n/g, '\n')
+    .trim();
 
   if (!normalizedMarkdown) {
     return { ...USER_PROFILE_DEFAULTS };
   }
 
-  const matches = [...normalizedMarkdown.matchAll(/^# (.+)\n\n([\s\S]*?)(?=^# |\s*$)/gm)];
-  const sections = Object.fromEntries(
-    matches.map(([, title, value]) => [title.trim(), value.trim()]),
-  );
+  const sections = parseMarkdownSections(normalizedMarkdown);
 
   return USER_SECTION_ORDER.reduce((result, [title, key]) => {
+    const sectionValue = sections[title.toLowerCase()];
+
     result[key] =
-      typeof sections[title] === 'string' && sections[title].trim()
-        ? sections[title].trim()
+      typeof sectionValue === 'string' && sectionValue.trim()
+        ? sectionValue.trim()
         : USER_PROFILE_DEFAULTS[key];
 
     return result;

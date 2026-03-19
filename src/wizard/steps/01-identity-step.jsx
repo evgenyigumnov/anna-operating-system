@@ -1,4 +1,5 @@
-import { buildIdentityMarkdown } from '../defaults';
+import { useEffect } from 'react';
+import { buildIdentityMarkdown, parseIdentityMarkdown } from '../defaults';
 
 const POPULAR_LANGUAGES = [
   'English',
@@ -64,6 +65,62 @@ function handleCustomLanguageChange(formData, onChange, value) {
 }
 
 function IdentityStep({ formData, onChange }) {
+  useEffect(() => {
+    const parsedIdentity = parseIdentityMarkdown(formData.identityMarkdown);
+    const normalizedLanguage = String(parsedIdentity.language || '').trim();
+    const nextLanguagePreset = POPULAR_LANGUAGES.includes(normalizedLanguage)
+      ? normalizedLanguage
+      : 'custom';
+    const nextLanguageCustom =
+      nextLanguagePreset === 'custom' ? normalizedLanguage : '';
+    const nextOperatingSystem =
+      String(parsedIdentity.operatingSystem || '').trim() ||
+      formData.identityOperatingSystem;
+
+    if (formData.identityName !== parsedIdentity.name) {
+      onChange('identityName', parsedIdentity.name);
+    }
+
+    if (formData.identitySex !== parsedIdentity.sex) {
+      onChange('identitySex', parsedIdentity.sex);
+    }
+
+    if (formData.identityLanguage !== normalizedLanguage) {
+      onChange('identityLanguage', normalizedLanguage);
+    }
+
+    if (formData.identityLanguagePreset !== nextLanguagePreset) {
+      onChange('identityLanguagePreset', nextLanguagePreset);
+    }
+
+    if (formData.identityLanguageCustom !== nextLanguageCustom) {
+      onChange('identityLanguageCustom', nextLanguageCustom);
+    }
+
+    if (formData.identityStyle !== parsedIdentity.style) {
+      onChange('identityStyle', parsedIdentity.style);
+    }
+
+    if (formData.identityRules !== parsedIdentity.rules) {
+      onChange('identityRules', parsedIdentity.rules);
+    }
+
+    if (formData.identityOperatingSystem !== nextOperatingSystem) {
+      onChange('identityOperatingSystem', nextOperatingSystem);
+    }
+  }, [
+    formData.identityLanguage,
+    formData.identityLanguageCustom,
+    formData.identityLanguagePreset,
+    formData.identityMarkdown,
+    formData.identityName,
+    formData.identityOperatingSystem,
+    formData.identityRules,
+    formData.identitySex,
+    formData.identityStyle,
+    onChange,
+  ]);
+
   return (
     <div className="wizard-step">
       <div className="wizard-step-copy">
