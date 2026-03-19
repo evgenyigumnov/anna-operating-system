@@ -1,5 +1,20 @@
 import { buildUserMarkdown } from '../defaults';
 
+const POPULAR_LANGUAGES = [
+  'English',
+  'Español',
+  'Français',
+  'Deutsch',
+  'Português',
+  'Русский',
+  'العربية',
+  'हिन्दी',
+  '中文',
+  '日本語',
+];
+
+const SEX_OPTIONS = ['Female', 'Male', 'Unspecified'];
+
 const REQUIRED_FIELDS = [
   ['fullName', 'Name and surname'],
   ['sex', 'Sex'],
@@ -33,18 +48,50 @@ function updateUserField(formData, onChange, field, value) {
   onChange('userMarkdown', buildUserMarkdown(nextProfile));
 }
 
+function getLanguagePresetValue(formData) {
+  return POPULAR_LANGUAGES.includes(formData.userLanguage)
+    ? formData.userLanguage
+    : 'custom';
+}
+
+function handleLanguagePresetChange(formData, onChange, value) {
+  const nextLanguage = value === 'custom' ? formData.userLanguageCustom : value;
+
+  onChange('userLanguagePreset', value);
+  onChange('userLanguage', nextLanguage);
+  onChange(
+    'userMarkdown',
+    buildUserMarkdown({
+      fullName: formData.userFullName,
+      sex: formData.userSex,
+      birthday: formData.userBirthday,
+      language: nextLanguage,
+      country: formData.userCountry,
+      city: formData.userCity,
+      family: formData.userFamily,
+      animals: formData.userAnimals,
+      interests: formData.userInterests,
+      rules: formData.userRules,
+      notes: formData.userNotes,
+    }),
+  );
+}
+
+function handleCustomLanguageChange(formData, onChange, value) {
+  onChange('userLanguageCustom', value);
+  updateUserField(formData, onChange, 'userLanguage', value);
+}
+
 function UserStep({ formData, onChange }) {
+  const languagePresetValue = getLanguagePresetValue(formData);
+
   return (
     <div className="wizard-step">
       <div className="wizard-step-copy">
-        <h2>Configure `USER.md`</h2>
-        <p>
-          Fill in the full user profile. Every field is required because this
-          data is used to build `USER.md`.
-        </p>
+        <h2>Describe yourself</h2>
       </div>
       <label className="wizard-field">
-        <span>Name and surname</span>
+        <span>Full name</span>
         <input
           className="wizard-input"
           type="text"
@@ -58,16 +105,20 @@ function UserStep({ formData, onChange }) {
       </label>
       <label className="wizard-field">
         <span>Sex</span>
-        <input
+        <select
           className="wizard-input"
-          type="text"
           value={formData.userSex}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userSex', event.target.value)
           }
-          placeholder="Male"
           required
-        />
+        >
+          {SEX_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
       </label>
       <label className="wizard-field">
         <span>Birthday</span>
@@ -78,23 +129,43 @@ function UserStep({ formData, onChange }) {
           onChange={(event) =>
             updateUserField(formData, onChange, 'userBirthday', event.target.value)
           }
-          placeholder="1979 March 17"
+          placeholder="March 17, 1979"
           required
         />
       </label>
       <label className="wizard-field">
         <span>Language</span>
-        <input
+        <select
           className="wizard-input"
-          type="text"
-          value={formData.userLanguage}
+          value={languagePresetValue}
           onChange={(event) =>
-            updateUserField(formData, onChange, 'userLanguage', event.target.value)
+            handleLanguagePresetChange(formData, onChange, event.target.value)
           }
-          placeholder="Russian (native), English (fluent)"
           required
-        />
+        >
+          {POPULAR_LANGUAGES.map((language) => (
+            <option key={language} value={language}>
+              {language}
+            </option>
+          ))}
+          <option value="custom">Custom</option>
+        </select>
       </label>
+      {languagePresetValue === 'custom' ? (
+        <label className="wizard-field">
+          <span>Custom language details</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userLanguageCustom || formData.userLanguage}
+            onChange={(event) =>
+              handleCustomLanguageChange(formData, onChange, event.target.value)
+            }
+            placeholder="Russian (native), English (fluent)"
+            required
+          />
+        </label>
+      ) : null}
       <label className="wizard-field">
         <span>Country</span>
         <input
@@ -124,33 +195,33 @@ function UserStep({ formData, onChange }) {
       <label className="wizard-field">
         <span>Family</span>
         <textarea
-          className="wizard-textarea"
+          className="wizard-textarea wizard-textarea--small"
           value={formData.userFamily}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userFamily', event.target.value)
           }
           rows="3"
-          placeholder="Wife: Jane"
+          placeholder="Married. Wife: Jane. Daughter: Emma."
           required
         />
       </label>
       <label className="wizard-field">
         <span>Animals</span>
         <textarea
-          className="wizard-textarea"
+          className="wizard-textarea wizard-textarea--small"
           value={formData.userAnimals}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userAnimals', event.target.value)
           }
           rows="3"
-          placeholder="Cat: Khaleesi"
+          placeholder="Cat: Khaleesi. Dog: Archie."
           required
         />
       </label>
       <label className="wizard-field">
         <span>Interests</span>
         <textarea
-          className="wizard-textarea"
+          className="wizard-textarea wizard-textarea--compact"
           value={formData.userInterests}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userInterests', event.target.value)
@@ -163,20 +234,20 @@ function UserStep({ formData, onChange }) {
       <label className="wizard-field">
         <span>Rules</span>
         <textarea
-          className="wizard-textarea"
+          className="wizard-textarea wizard-textarea--compact"
           value={formData.userRules}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userRules', event.target.value)
           }
           rows="4"
-          placeholder="- Be direct and stay on topic."
+          placeholder="- Be direct and stay on topic.&#10;- Remind about important deadlines."
           required
         />
       </label>
       <label className="wizard-field">
         <span>Notes</span>
         <textarea
-          className="wizard-textarea"
+          className="wizard-textarea wizard-textarea--compact"
           value={formData.userNotes}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userNotes', event.target.value)
