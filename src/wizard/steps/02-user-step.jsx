@@ -14,6 +14,7 @@ const POPULAR_LANGUAGES = [
 ];
 
 const SEX_OPTIONS = ['Female', 'Male', 'Unspecified'];
+const OPTIONAL_ABSENT_VALUE = 'Absent';
 
 const REQUIRED_FIELDS = [
   ['fullName', 'Name and surname'],
@@ -22,30 +23,45 @@ const REQUIRED_FIELDS = [
   ['language', 'Language'],
   ['country', 'Country'],
   ['city', 'City'],
-  ['family', 'Family'],
-  ['animals', 'Animals'],
   ['interests', 'Interests'],
   ['rules', 'Rules'],
   ['notes', 'Notes'],
 ];
 
-function updateUserField(formData, onChange, field, value) {
+function buildUserProfile(formData, overrides = {}) {
   const nextProfile = {
-    fullName: field === 'userFullName' ? value : formData.userFullName,
-    sex: field === 'userSex' ? value : formData.userSex,
-    birthday: field === 'userBirthday' ? value : formData.userBirthday,
-    language: field === 'userLanguage' ? value : formData.userLanguage,
-    country: field === 'userCountry' ? value : formData.userCountry,
-    city: field === 'userCity' ? value : formData.userCity,
-    family: field === 'userFamily' ? value : formData.userFamily,
-    animals: field === 'userAnimals' ? value : formData.userAnimals,
-    interests: field === 'userInterests' ? value : formData.userInterests,
-    rules: field === 'userRules' ? value : formData.userRules,
-    notes: field === 'userNotes' ? value : formData.userNotes,
+    fullName: formData.userFullName,
+    sex: formData.userSex,
+    birthday: formData.userBirthday,
+    language: formData.userLanguage,
+    country: formData.userCountry,
+    city: formData.userCity,
+    family: formData.userFamily,
+    animals: formData.userAnimals,
+    interests: formData.userInterests,
+    rules: formData.userRules,
+    notes: formData.userNotes,
+    ...overrides,
   };
 
+  return {
+    ...nextProfile,
+    family: String(nextProfile.family || '').trim() || OPTIONAL_ABSENT_VALUE,
+    animals: String(nextProfile.animals || '').trim() || OPTIONAL_ABSENT_VALUE,
+  };
+}
+
+function updateUserField(formData, onChange, field, value) {
   onChange(field, value);
-  onChange('userMarkdown', buildUserMarkdown(nextProfile));
+  onChange(
+    'userMarkdown',
+    buildUserMarkdown(
+      buildUserProfile(formData, {
+        [field.replace(/^user/, '').replace(/^[A-Z]/, (letter) => letter.toLowerCase())]:
+          value,
+      }),
+    ),
+  );
 }
 
 function getLanguagePresetValue(formData) {
@@ -59,22 +75,7 @@ function handleLanguagePresetChange(formData, onChange, value) {
 
   onChange('userLanguagePreset', value);
   onChange('userLanguage', nextLanguage);
-  onChange(
-    'userMarkdown',
-    buildUserMarkdown({
-      fullName: formData.userFullName,
-      sex: formData.userSex,
-      birthday: formData.userBirthday,
-      language: nextLanguage,
-      country: formData.userCountry,
-      city: formData.userCity,
-      family: formData.userFamily,
-      animals: formData.userAnimals,
-      interests: formData.userInterests,
-      rules: formData.userRules,
-      notes: formData.userNotes,
-    }),
-  );
+  onChange('userMarkdown', buildUserMarkdown(buildUserProfile(formData, { language: nextLanguage })));
 }
 
 function handleCustomLanguageChange(formData, onChange, value) {
@@ -202,7 +203,6 @@ function UserStep({ formData, onChange }) {
           }
           rows="3"
           placeholder="Married. Wife: Jane. Daughter: Emma."
-          required
         />
       </label>
       <label className="wizard-field">
@@ -215,7 +215,6 @@ function UserStep({ formData, onChange }) {
           }
           rows="3"
           placeholder="Cat: Khaleesi. Dog: Archie."
-          required
         />
       </label>
       <label className="wizard-field">
@@ -276,19 +275,7 @@ export const wizardStep = {
     return '';
   },
   async persist(formData) {
-    const markdown = buildUserMarkdown({
-      fullName: formData.userFullName,
-      sex: formData.userSex,
-      birthday: formData.userBirthday,
-      language: formData.userLanguage,
-      country: formData.userCountry,
-      city: formData.userCity,
-      family: formData.userFamily,
-      animals: formData.userAnimals,
-      interests: formData.userInterests,
-      rules: formData.userRules,
-      notes: formData.userNotes,
-    });
+    const markdown = buildUserMarkdown(buildUserProfile(formData));
 
     await window.appControls.saveUserMarkdown(markdown);
   },
