@@ -14,7 +14,7 @@
 | Tools / Desktop notification tool                                                                     |            |
 | Tools / Remote PC action tool via Telegram bridge                                                     | Igumnov    |
 | Hooks / Morning brief from the day from news, emails and etc                                          | Igumnov    |
-| Hooks / Evening brief from reminders, tasks, emails and unresolved items                              |            |
+| Hooks / Evening brief from reminders, tasks, emails and unresolved items                              | Igumnov    |
 | Hooks / Website and price change monitoring with deduplicated alerts                                  |            |
 | Features / Remote control from Telegram / Permissions (Allow all, Accept once, Accept and allow next) | Igumnov    |
 | Features / Slepping mode (do not disturb at night)                                                    | Igumnov    |
