@@ -153,7 +153,7 @@ function IdentityStep({ formData, onChange }) {
           onChange={(event) =>
             updateIdentityField(formData, onChange, 'identityRules', event.target.value)
           }
-          rows="4"
+          rows="6"
           placeholder="- Explain capabilities in plain language.&#10;- Provide examples when needed."
         />
       </label>
