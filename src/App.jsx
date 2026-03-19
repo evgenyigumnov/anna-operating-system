@@ -619,11 +619,11 @@ function App() {
     return (
       <main className="app">
         <section className="card wizard-card">
-          <div className="wizard-header">
-            <p className="wizard-progress">
-              Step {wizardStepIndex + 1} of {visibleWizardSteps.length || 1}
-            </p>
-          </div>
+          {/*<div className="wizard-header">*/}
+          {/*  <p className="wizard-progress">*/}
+          {/*    Step {wizardStepIndex + 1} of {visibleWizardSteps.length || 1}*/}
+          {/*  </p>*/}
+          {/*</div>*/}
           {StepComponent ? (
             <StepComponent
               formData={formData}
