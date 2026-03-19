@@ -91,67 +91,95 @@ function UserStep({ formData, onChange }) {
       <div className="wizard-step-copy">
         <h2>Describe yourself</h2>
       </div>
-      <label className="wizard-field">
-        <span>Full name</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.userFullName}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userFullName', event.target.value)
-          }
-          placeholder="John Doe"
-          required
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Sex</span>
-        <select
-          className="wizard-input"
-          value={formData.userSex}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userSex', event.target.value)
-          }
-          required
-        >
-          {SEX_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="wizard-field">
-        <span>Birthday</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.userBirthday}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userBirthday', event.target.value)
-          }
-          placeholder="March 17, 1979"
-          required
-        />
-      </label>
-      <label className="wizard-field">
-        <span>Language</span>
-        <select
-          className="wizard-input"
-          value={languagePresetValue}
-          onChange={(event) =>
-            handleLanguagePresetChange(formData, onChange, event.target.value)
-          }
-          required
-        >
-          {POPULAR_LANGUAGES.map((language) => (
-            <option key={language} value={language}>
-              {language}
-            </option>
-          ))}
-          <option value="custom">Custom</option>
-        </select>
-      </label>
+      <div className="wizard-field-grid wizard-field-grid--triple">
+        <label className="wizard-field">
+          <span>Full name</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userFullName}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userFullName', event.target.value)
+            }
+            placeholder="John Doe"
+            required
+          />
+        </label>
+        <label className="wizard-field">
+          <span>Sex</span>
+          <select
+            className="wizard-input"
+            value={formData.userSex}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userSex', event.target.value)
+            }
+            required
+          >
+            {SEX_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="wizard-field">
+          <span>Birthday</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userBirthday}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userBirthday', event.target.value)
+            }
+            placeholder="March 17, 1979"
+            required
+          />
+        </label>
+        <label className="wizard-field">
+          <span>Language</span>
+          <select
+            className="wizard-input"
+            value={languagePresetValue}
+            onChange={(event) =>
+              handleLanguagePresetChange(formData, onChange, event.target.value)
+            }
+            required
+          >
+            {POPULAR_LANGUAGES.map((language) => (
+              <option key={language} value={language}>
+                {language}
+              </option>
+            ))}
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+        <label className="wizard-field">
+          <span>Country</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userCountry}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userCountry', event.target.value)
+            }
+            placeholder="USA"
+            required
+          />
+        </label>
+        <label className="wizard-field">
+          <span>City</span>
+          <input
+            className="wizard-input"
+            type="text"
+            value={formData.userCity}
+            onChange={(event) =>
+              updateUserField(formData, onChange, 'userCity', event.target.value)
+            }
+            placeholder="New York City"
+            required
+          />
+        </label>
+      </div>
       {languagePresetValue === 'custom' ? (
         <label className="wizard-field">
           <span>Custom language details</span>
@@ -168,64 +196,38 @@ function UserStep({ formData, onChange }) {
         </label>
       ) : null}
       <label className="wizard-field">
-        <span>Country</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.userCountry}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userCountry', event.target.value)
-          }
-          placeholder="USA"
-          required
-        />
-      </label>
-      <label className="wizard-field">
-        <span>City</span>
-        <input
-          className="wizard-input"
-          type="text"
-          value={formData.userCity}
-          onChange={(event) =>
-            updateUserField(formData, onChange, 'userCity', event.target.value)
-          }
-          placeholder="New York City"
-          required
-        />
-      </label>
-      <label className="wizard-field">
         <span>Family</span>
-        <textarea
-          className="wizard-textarea wizard-textarea--small"
+        <input
+          className="wizard-input"
+          type="text"
           value={formData.userFamily}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userFamily', event.target.value)
           }
-          rows="3"
           placeholder="Married. Wife: Jane. Daughter: Emma."
         />
       </label>
       <label className="wizard-field">
         <span>Animals</span>
-        <textarea
-          className="wizard-textarea wizard-textarea--small"
+        <input
+          className="wizard-input"
+          type="text"
           value={formData.userAnimals}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userAnimals', event.target.value)
           }
-          rows="3"
           placeholder="Cat: Khaleesi. Dog: Archie."
         />
       </label>
       <label className="wizard-field">
         <span>Interests</span>
         <textarea
-          className="wizard-textarea wizard-textarea--compact"
+          className="wizard-textarea wizard-textarea--small"
           value={formData.userInterests}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userInterests', event.target.value)
           }
-          rows="4"
+          rows="2"
           placeholder="- Software development&#10;- Reading&#10;- Traveling"
           required
         />
@@ -233,12 +235,12 @@ function UserStep({ formData, onChange }) {
       <label className="wizard-field">
         <span>Rules</span>
         <textarea
-          className="wizard-textarea wizard-textarea--compact"
+          className="wizard-textarea wizard-textarea--small"
           value={formData.userRules}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userRules', event.target.value)
           }
-          rows="4"
+          rows="2"
           placeholder="- Be direct and stay on topic.&#10;- Remind about important deadlines."
           required
         />
@@ -246,12 +248,12 @@ function UserStep({ formData, onChange }) {
       <label className="wizard-field">
         <span>Notes</span>
         <textarea
-          className="wizard-textarea wizard-textarea--compact"
+          className="wizard-textarea wizard-textarea--small"
           value={formData.userNotes}
           onChange={(event) =>
             updateUserField(formData, onChange, 'userNotes', event.target.value)
           }
-          rows="5"
+          rows="2"
           placeholder="- The user often works on technical and product tasks."
           required
         />

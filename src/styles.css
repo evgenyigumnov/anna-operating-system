@@ -270,6 +270,15 @@ button:hover {
   font-weight: 700;
 }
 
+.wizard-field-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.wizard-field-grid--triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .wizard-input,
 .wizard-textarea {
   width: 100%;
@@ -306,4 +315,10 @@ button:hover {
   border: 1px solid rgba(233, 176, 176, 0.75);
   color: #9f2f2f;
   background: rgba(252, 233, 233, 0.95);
+}
+
+@media (max-width: 900px) {
+  .wizard-field-grid--triple {
+    grid-template-columns: 1fr;
+  }
 }
