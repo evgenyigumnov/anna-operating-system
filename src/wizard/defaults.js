@@ -26,10 +26,10 @@ const USER_PROFILE_DEFAULTS = {
   city: 'New York',
   family: '',
   animals: '',
-  interests: 'Reading\n- Traveling',
+  interests: '- Reading\n- Traveling',
   rules: '- Be direct and stay on topic.\n- Do not overload with unnecessary explanations.',
   notes:
-    'I may combine work, travel, and personal planning in one workflow.\n- Important personal context can include close family members and pets.',
+    '-I may combine work, travel, and personal planning in one workflow.\n- Important personal context can include close family members and pets.',
 };
 
 const USER_SECTION_ORDER = [
