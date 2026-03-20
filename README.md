@@ -1,11 +1,14 @@
-# Anna Operating System
+# Hi everyone, we've formed a team of programmers and a marketer in exchange for a share of the business. Several investors are looking for MVP from us. Therefore, we're archiving the source code repository and continuing to work on a commercial basis. If you'd like to invest or contribute to the project for a share, message me on Telegram @ievkz
+
+
+## Anna Operating System
 
 Anna Operating System is a local desktop assistant built with Electron and React. It provides a chat window connected to an LLM through an OpenAI-compatible API and can use local tools to perform practical actions on the computer.
 
 The current identity of the assistant is defined in [IDENTITY.md](IDENTITY.md): the assistant is named Anna, speaks English, and answers in a simple, concise style with a sense of humor. The application persists chat history locally and renders assistant responses as Markdown.
 If `TELEGRAM_TOKEN` is defined in `.env`, the app also starts a Telegram bot bridge: incoming Telegram text messages are added to the main conversation and assistant replies are mirrored back to Telegram.
 
-## Markdown configuration files
+### Markdown configuration files
 
 The application can extend the main assistant prompt with additional Markdown files:
 
@@ -13,7 +16,7 @@ The application can extend the main assistant prompt with additional Markdown fi
 - [USER.md](USER.md): adds a user profile block to the system prompt. Use it for stable personal context such as name, location, family, preferences, and communication rules.
 - [EMAIL.md](EMAIL.md): adds email-specific rules to the system prompt when IMAP is configured. Use it to describe which emails are important, how to summarize them, when to stay silent, and what reply format to follow.
 
-## What the project already does
+### What the project already does
 
 ![ui](ui.png)
 
@@ -31,7 +34,7 @@ The application can extend the main assistant prompt with additional Markdown fi
 - Starts optional background hooks from `electron/hooks`, including email polling when IMAP is configured.
 - Starts an optional Telegram bridge when `TELEGRAM_TOKEN` is configured, mirrors conversation messages, and replies to Telegram chats.
 
-## Available tools
+### Available tools
 
 The current implementation in `electron/tools` supports these actions:
 
@@ -42,14 +45,14 @@ The current implementation in `electron/tools` supports these actions:
 - `manage_email`: list folders, list message summaries, read a full message, delete a message, and send a message through Gmail IMAP/SMTP.
 - `task_from_steps`: internal helper for multi-step task execution.
 
-## Hooks
+### Hooks
 
 Run background logic on app startup (e.g. watchers, listeners). Implementation in `electron/hooks` supports these actions:
 
 - `email` — watches inbox and creates tasks for new emails
 
 
-## Background task system
+### Background task system
 
 The project includes a built-in task runner. Tasks are stored as Markdown files with sections such as `# Schedule`, `# Instructions`, and `# History`.
 
@@ -75,7 +78,7 @@ Task history can be disabled with `No` or configured as `Last N messages` so rep
 
 One-time tasks are deleted automatically after a successful run. Periodic tasks are rescheduled after each execution.
 
-## Example user messages
+### Example user messages
 
 These are examples of messages the current assistant should be able to handle because they map directly to the implemented tools and task flow:
 
@@ -96,11 +99,11 @@ These are examples of messages the current assistant should be able to handle be
 - `Delete the email with UID 123 from INBOX.`
 - `Send an email to bob@example.com with cc to team@example.com.`
 
-## Planned features
+### Planned features
 
 [TODO.md](TODO.md) shows features that are planned but not implemented yet.
 
-## How to run Anna Operating System in development mode
+### How to run Anna Operating System in development mode
 
 1. Optional: install Ubuntu 22.04 in a virtual machine and do the next steps there.
 2. Install Ollama. Set enviroment variable `OLLAMA_HOST=0.0.0.0:11434` before starting Ollama.
@@ -131,7 +134,7 @@ EMAIL_SMTP_PASSWORD=your_app_password
 13. Run `npm start`.
 
 
-## Build instructions for Windows
+### Build instructions for Windows
 ```bash
 npm run build:exe
 ```
